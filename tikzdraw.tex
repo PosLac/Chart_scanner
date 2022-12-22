@@ -8,14 +8,12 @@
 \usepackage{pgfplots}%
 \pgfplotsset{compat=newest}%
 %
-%
+\usetikzlibrary{positioning}%
 %
 \begin{document}%
 \normalsize%
 \begin{tikzpicture}%
-\begin{tikzpicture}%
-\begin{axis}[xbar, title = Title\newline%
-]%
+\begin{axis}[xbar, name=mygraph]%
 \addplot coordinates {%
 (3.2,1)%
 (0.44999999999999996,2)%
@@ -26,6 +24,7 @@
 %
 %
 \end{axis}%
-\end{tikzpicture}%
+\node[below =of mygraph] {Diagramcím};%
+\node {};%
 \end{tikzpicture}%
 \end{document}

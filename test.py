@@ -1,16 +1,14 @@
 import math
+import re
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import pytesseract
-import re
-import matplotlib.pyplot as plt
 # import pylatex as pl
-import pylatex.tikz
 from pylatex import (Document, TikZ, TikZNode,
-                     TikZDraw, TikZCoordinate,
-                     TikZUserPath, TikZOptions,
-                     Subsection, Axis, Plot, Package)
+                     TikZOptions,
+                     Axis, Plot, Package, Command)
 
 pytesseract.pytesseract.tesseract_cmd = 'D:/Apps/Tesseract/tesseract.exe'
 single_digit = r'--oem 3 --psm 10 -c tessedit_char_whitelist=0123456789'
@@ -432,7 +430,7 @@ def to_latex():
 
 
 def latex():
-    global orientation, ratios, max_y, new_numbers, chart_title
+    global orientation, ratios, max_y, new_numbers, chart_title, title_below
     ratios = ratios * new_numbers[0][5]
     print('coordinates: ', ratios)
     # todo 5 a max, 4 kell
@@ -441,6 +439,7 @@ def latex():
 
     # doc.packages.append(Package('fontspec'))
     # doc.packages.append(Package('sansmath'))
+    doc.preamble.append(Command('usetikzlibrary', 'positioning'))
 
     coordinates = []
     i = 0
@@ -459,12 +458,26 @@ def latex():
             i += 1
 
     print(coordinates)
+
+    title_string = ''
+    title_below = True
+    if not title_below:
+        title_string = ', title = ' + chart_title
+
+
     with doc.create(TikZ()):
-        with doc.create(TikZ()):
-            # plot_options = orientation + ', title style={align=left}, ymin = 0, ymax = 9, xmin = 0, xmax = 9'
-            plot_options = orientation + ', title = '+chart_title
-            with doc.create(Axis(options=plot_options)) as plot:
-                plot.append(Plot(coordinates=coordinates))
+        # plot_options = orientation + ', title style={align=left}, ymin = 0, ymax = 9, xmin = 0, xmax = 9'
+        plot_options = orientation + ', name=mygraph' + title_string
+        with doc.create(Axis(options=plot_options)) as plot:
+            plot.append(Plot(coordinates=coordinates))
+
+        if title_below:
+            node_chain = TikZNode(text=str('Diagramcím'),
+                                  options=TikZOptions('below =of mygraph'))
+            doc.append(node_chain)
+
+        with doc.create(TikZNode()) as title:
+            title.append(TikZNode())
 
     doc.generate_pdf('tikzdraw', clean_tex=False, compiler='pdfLaTeX')
 
