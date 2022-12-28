@@ -65,27 +65,31 @@ def latex():
     print(coordinates)
 
     title_string = ''
-    title_below = False
-    chart_title = detects.detect_title()
-    print(chart_title)
-    if not title_below:
+    # 0: nincs
+    # 1: felül
+    # -1: alul
+    title_type = 0
+    chart_title = detects.detect_title(title_type)
+
+    if title_type == 1:
+        #print(chart_title)
         title_string = ', title = ' + chart_title
 
 
     with doc.create(TikZ()):
         # plot_options = orientation + ', title style={align=left}, ymin = 0, ymax = 9, xmin = 0, xmax = 9'
         plot_options = orientation + ', name=mygraph' + title_string \
-                       + ', xmin = ' + str(detects.c_new_numbers[-1][7])\
-                       + ', xmax = ' + str(detects.c_new_numbers[0][7])\
-                       + ', ymin = ' + str(detects.r_new_numbers[-1][7])\
-                       + ', ymax = ' + str(detects.r_new_numbers[0][7])
+                       # + ', xmin = ' + str(detects.r_new_numbers[-1][7])\
+                       # + ', xmax = ' + str(detects.r_new_numbers[0][7])\
+                       # + ', ymin = ' + str(detects.c_new_numbers[-1][7])\
+                       # + ', ymax = ' + str(detects.c_new_numbers[0][7])
 
         # plot_options = orientation + ', name=mygraph' + title_string
         with doc.create(Axis(options=plot_options)) as plot:
             plot.append(Plot(coordinates=coordinates))
 
-        if title_below:
-            node_chain = TikZNode(text=str('Diagramcím'),
+        if title_type == -1:
+            node_chain = TikZNode(text=chart_title,
                                   options=TikZOptions('below =of mygraph'))
             doc.append(node_chain)
 

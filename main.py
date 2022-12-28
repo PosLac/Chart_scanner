@@ -11,8 +11,12 @@ if __name__ == "__main__":
     edits.rotate()
     detects.connected_components()
     edits.morphological_transform()
+    detects.bars()
     detects.define_orientation()
-    # detects.detect_title()
+    # 0: nincs
+    # 1: felül
+    # -1: alul
+    detects.detect_title(0)
     # to_latex()
     to_latex.latex()
     cv2.waitKey(0)

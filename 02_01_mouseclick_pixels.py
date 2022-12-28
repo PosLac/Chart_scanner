@@ -26,7 +26,9 @@ def mouse_click(event, x, y, flags, param):
 
 # image_original = cv2.imread('OpenCV-logo.png', cv2.IMREAD_COLOR)
 # image_original = cv2.imread('Sudoku_rs.jpg', cv2.IMREAD_COLOR)
-image = cv2.imread('Inputs/chart_xbar.png', cv2.IMREAD_COLOR)
+# image = cv2.imread('Inputs/chart_xbar.png', cv2.IMREAD_COLOR)
+image = cv2.imread('Inputs/chart_ybar.png', cv2.IMREAD_COLOR)
+
 image = image.copy()
 percent = 1
 width = int(image.shape[1] * percent)

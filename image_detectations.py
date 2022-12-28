@@ -24,7 +24,7 @@ r_new_numbers = None
 
 def connected_components():
     # Összefüggő elemek keresése
-    global binary, num_size, percent, resized, chart_with_bars_img, numbers, centoids, stats, max_y, new_numbers, chart_title, r_numbers, c_numbers, c_new_numbers, r_new_numbers
+    global binary, num_size, percent, resized, chart_with_bars_img, numbers, centoids, stats, max_y, new_numbers, chart_title, r_numbers, c_numbers, c_new_numbers, r_new_numbers, elements
     resized = edits.resized
     binary = edits.create_binary()
     ret_val, labels, stats, centoids = cv2.connectedComponentsWithStats(binary, None, 8)
@@ -33,8 +33,6 @@ def connected_components():
     print(binary.shape)
     x_half = binary.shape[0] / 3
     y_half = binary.shape[1] / 3
-
-    # todo
 
     column = []
     row = []
@@ -198,8 +196,10 @@ def connected_components():
     #     # cv2.imwrite(str(numbers_int) + ': ' + str(i)+'.png', img_re)
     #     i += 1
 
-    all_numbers = np.concatenate((c_final, r_final), axis=0)
-
+    all_numbers = c_final + r_final
+    print('all_numbers: ', all_numbers)
+    # all_numbers = np.concatenate((c_final, r_final), axis=0)
+    # print('all_numbers: ', all_numbers)
     for number in all_numbers:
         x1 = number[0] - xplus
         x2 = number[0] + number[2] + xplus
@@ -231,6 +231,19 @@ def connected_components():
 
     print('numbers: ', numbers_str)
     j = 0
+    c_new_numbers = []
+    for c_number in c_numbers:
+        x2 = c_number[0] + c_number[2] + xplus
+        y2 = c_number[1] + c_number[3] + yplus
+        cv2.putText(edits.resized, numbers_str[j], (x2 - xplus, y2), cv2.QT_FONT_NORMAL, 1, 0, 2)
+        centoid_x = np.round(c_number[0] + c_number[2]//2)
+        centoid_y = np.round(c_number[1] + c_number[3]//2)
+        c_number = np.append(c_number, int(centoid_x))
+        c_number = np.append(c_number, int(centoid_y))
+        c_number = np.append(c_number, int(numbers_str[j]))
+        c_new_numbers.append(c_number)
+        j += 1
+
     r_new_numbers = []
     for r_number in r_numbers:
         x2 = r_number[0] + r_number[2] + xplus
@@ -244,19 +257,6 @@ def connected_components():
         r_new_numbers.append(r_number)
         j += 1
 
-    j = 0
-    c_new_numbers = []
-    for c_number in c_numbers:
-        x2 = c_number[0] + c_number[2] + xplus
-        y2 = c_number[1] + c_number[3] + yplus
-        cv2.putText(edits.resized, numbers_str[j], (x2 - xplus, y2), cv2.QT_FONT_NORMAL, 1, 0, 2)
-        centoid_x = np.round(c_number[0] + c_number[2]//2)
-        centoid_y = np.round(c_number[1] + c_number[3]//2)
-        c_number = np.append(c_number, int(centoid_x))
-        c_number = np.append(c_number, int(centoid_y))
-        c_number = np.append(c_number, int(numbers_str[j]))
-        c_new_numbers.append(c_number)
-        j += 1
 
 
     # for number in numbers:
@@ -278,23 +278,15 @@ def connected_components():
     # print('numbers: ', numbers)
 
 
-    # print('cmin:', c_new_numbers[-1])
-    # print('cmax:', c_new_numbers[0])
-    # print('dist: ', c_new_numbers[-1][6] - c_new_numbers[0][6], ', unit: ', c_new_numbers[0][7])
 
-    print()
-    print('rmin:', r_new_numbers[-1])
-    print('rmax:', r_new_numbers[0])
-    print('dist: ', r_new_numbers[0][5] - r_new_numbers[-1][5], ', unit: ', r_new_numbers[0][7])
-    print('1 unit: ', (r_new_numbers[0][5] - r_new_numbers[-1][5])/r_new_numbers[0][7])
-    print('1 unit: ', r_new_numbers[0][7] / (r_new_numbers[0][5] - r_new_numbers[-1][5]))
+def detect_title(has_title):
 
-
-def detect_title():
-
-    title_img = binary[0:200, 0:]
-
-
+    if has_title == 0:
+        return None
+    elif has_title == 1:
+        title_img = binary[0:200, 0:]
+    elif has_title == -1:
+        title_img = binary[-200:, 0:]
 
     title_img = 255 - title_img
     # cv2.imshow('tit', title_img)
@@ -304,8 +296,43 @@ def detect_title():
     print(chart_title)
     return chart_title
 
+def bars():
+    global mean
+    elements = edits.elements
+    print('elements: ', elements)
+    new_elements = []
+    for bar in elements:
+        start = bar[1] + bar[3]
+        bar = np.append(bar, start)
+        new_elements.append(bar)
+        print(bar)
+
+    elements = new_elements
+    print('elements: ', elements)
+    sum = 0
+    for bar in elements:
+        sum += bar[5]
+    mean = sum/len(elements)
+    print('mean: ', mean)
+
+
+
+
+    print('cmin:', mean)
+    print('cmax:', c_new_numbers[0])
+    print('dist: ', mean - c_new_numbers[0][6], ', unit: ', c_new_numbers[0][7])
+    print('1 unit: ', (mean - c_new_numbers[0][6])/c_new_numbers[0][7])
+
+    # print('1 unit: ', c_new_numbers[0][7] / (c_new_numbers[-1][6] - c_new_numbers[0][6]))
+    # print('rmin:', r_new_numbers[-1])
+    # print('rmax:', r_new_numbers[0])
+    # print('dist: ', r_new_numbers[0][5] - r_new_numbers[-1][5], ', unit: ', r_new_numbers[0][7])
+    # print('1 unit: ', (r_new_numbers[0][5] - r_new_numbers[-1][5])/r_new_numbers[0][7])
+    # print('1 unit: ', r_new_numbers[0][7] / (r_new_numbers[0][5] - r_new_numbers[-1][5]))
+
+
 def define_orientation():
-    global elements, bar_hs, bars, ratios, numbers, orientation, resized, r_numbers, c_numbers, c_new_numbers, r_new_numbers
+    global elements, bar_hs, bars, ratios, numbers, orientation, resized, r_numbers, c_numbers, c_new_numbers, r_new_numbers, mean
     resized = edits.resized
     elements = edits.elements
     bar_hs = []
@@ -341,7 +368,13 @@ def define_orientation():
         bar_hs.append(element[x_v])
     max_bar = max(bar_hs)
     #ratios = np.round(bar_hs / max_full[x_v], 2)
-    ratios = np.round(bar_hs / (r_new_numbers[0][5] - r_new_numbers[-1][5]), 2)
+    if orientation == 'xbar':
+        ratios = np.round(bar_hs / (r_new_numbers[0][5] - r_new_numbers[-1][5]), 2)
+    elif orientation == 'ybar':
+        print(':', mean - c_new_numbers[0][6])
+        print(c_new_numbers[0])
+        ratios = np.round(bar_hs / (mean - c_new_numbers[0][6]), 2)
+        print('ratios:', ratios)
 
     print('orientation: ', orientation)
     print('bar_hs: ', bar_hs)

@@ -13,12 +13,12 @@ elements = None
 def read():
     # Beolvasás
     global img, img_orig
-    img_orig = cv2.imread('Inputs/chart_xbar.png', cv2.IMREAD_GRAYSCALE)
+    # img_orig = cv2.imread('Inputs/chart_xbar.png', cv2.IMREAD_GRAYSCALE)
 
     # img_orig = cv2.imread('Inputs/chart_ybar.png', cv2.IMREAD_GRAYSCALE)
     # img_orig = cv2.imread('Inputs/chart_ybar_r.png', cv2.IMREAD_GRAYSCALE)
 
-    # img_orig = cv2.imread('Inputs/chart_xbar_ex.png', cv2.IMREAD_GRAYSCALE)
+    img_orig = cv2.imread('Inputs/chart_xbar_ex.png', cv2.IMREAD_GRAYSCALE)
 
     # img_orig = cv2.imread('Inputs/chart_longtitle.png', cv2.IMREAD_GRAYSCALE)
     # img_orig = cv2.imread('Inputs/chart_stacked.png', cv2.IMREAD_GRAYSCALE)
