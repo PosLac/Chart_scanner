@@ -19,7 +19,7 @@ def main(fname):
     # -1: alul
     detects.detect_title(0)
     # to_latex()
-    to_latex.latex()
+    to_latex.latex(detects.orientation, detects.ratios)
     print("Main completed")
     # todo destroyallwindow
     # cv2.waitKey(0)

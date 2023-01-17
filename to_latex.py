@@ -28,10 +28,16 @@ def to_latex():
     ratios = ratios / new_numbers[0][5]
 
 
-def latex():
-    global orientation, ratios, max_y, new_numbers, chart_title, title_below
-    ratios = detects.ratios
-    orientation = detects.orientation
+orientation = None
+ratios = None
+max_y = None
+chart_title = None
+title_below = None
+
+
+def latex(orientation, ratios):
+    # ratios = detects.ratios
+    # orientation = detects.orientation
     if orientation == 'xbar':
         ratios = ratios * detects.r_new_numbers[0][7]
     elif orientation == 'ybar':

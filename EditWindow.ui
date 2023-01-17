@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1980</width>
+    <height>1020</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>20</y>
+      <width>1951</width>
+      <height>771</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string/>
+    </property>
+    <widget class="QPushButton" name="update_button">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>550</y>
+       <width>201</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Diagram frissítése</string>
+     </property>
+    </widget>
+    <widget class="QGroupBox" name="min_max_group">
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>230</y>
+       <width>431</width>
+       <height>191</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="title">
+      <string/>
+     </property>
+     <widget class="QCheckBox" name="xMin_check">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>270</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>X-tengely minimum értéke</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="yMax_check">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>130</y>
+        <width>270</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Y-tengely maximum értéke</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="yMin_check">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>100</y>
+        <width>270</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Y-tengely minimum értéke</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="xMax_check">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>50</y>
+        <width>270</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>X-tengely maximum értéke</string>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="xMin">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>310</x>
+        <y>20</y>
+        <width>80</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+      <property name="maximum">
+       <number>999999999</number>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="xMax">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>310</x>
+        <y>50</y>
+        <width>80</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+      <property name="maximum">
+       <number>999999999</number>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="yMin">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>310</x>
+        <y>100</y>
+        <width>80</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+      <property name="maximum">
+       <number>999999999</number>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="yMax">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>310</x>
+        <y>130</y>
+        <width>80</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+      <property name="maximum">
+       <number>999999999</number>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="title_group">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>30</y>
+       <width>391</width>
+       <height>171</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <italic>false</italic>
+       <underline>false</underline>
+      </font>
+     </property>
+     <property name="title">
+      <string/>
+     </property>
+     <widget class="QRadioButton" name="below">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>100</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <italic>false</italic>
+        <underline>false</underline>
+       </font>
+      </property>
+      <property name="text">
+       <string>Diagram alatt</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="above">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>60</y>
+        <width>171</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <italic>false</italic>
+        <underline>false</underline>
+       </font>
+      </property>
+      <property name="text">
+       <string>Diagram felett</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="title_label">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>131</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <italic>false</italic>
+        <underline>false</underline>
+       </font>
+      </property>
+      <property name="text">
+       <string>Diagramcím: </string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="title_text">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>30</y>
+        <width>201</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <italic>false</italic>
+        <underline>false</underline>
+       </font>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QLabel" name="chart">
+     <property name="geometry">
+      <rect>
+       <x>890</x>
+       <y>60</y>
+       <width>700</width>
+       <height>700</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1980</width>
+     <height>26</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
