@@ -1,4 +1,5 @@
 import math
+import time
 
 import cv2
 import numpy as np
@@ -10,15 +11,21 @@ resized = None
 elements = None
 
 
-def read():
+def read(fname):
     # Beolvasás
     global img, img_orig
-    # img_orig = cv2.imread('Inputs/chart_xbar.png', cv2.IMREAD_GRAYSCALE)
+    print("read s")
+    img_orig = cv2.imread(fname, cv2.IMREAD_GRAYSCALE)
+    print("read c")
+    #img_orig = cv2.imread('Inputs/chart_xbar.png', cv2.IMREAD_GRAYSCALE)
+    # img_orig = cv2.imread('Inputs/xbar_str.png', cv2.IMREAD_GRAYSCALE)
+    # img_orig = cv2.imread('Inputs/ybar_str.png', cv2.IMREAD_GRAYSCALE)
+    # img_orig = cv2.imread('Inputs/chart_xbar_str.png', cv2.IMREAD_GRAYSCALE)
 
     # img_orig = cv2.imread('Inputs/chart_ybar.png', cv2.IMREAD_GRAYSCALE)
     # img_orig = cv2.imread('Inputs/chart_ybar_r.png', cv2.IMREAD_GRAYSCALE)
 
-    img_orig = cv2.imread('Inputs/chart_xbar_ex.png', cv2.IMREAD_GRAYSCALE)
+    # img_orig = cv2.imread('Inputs/chart_xbar_ex.png', cv2.IMREAD_GRAYSCALE)
 
     # img_orig = cv2.imread('Inputs/chart_longtitle.png', cv2.IMREAD_GRAYSCALE)
     # img_orig = cv2.imread('Inputs/chart_stacked.png', cv2.IMREAD_GRAYSCALE)
@@ -40,10 +47,9 @@ def upscale():
     img = cv2.resize(img, (width, height))
     num_size = img.shape[0] * img.shape[1] / 1000
     # print(img.shape[0]*img.shape[1])
-    print('num_size: ', num_size)
+    # print('num_size: ', num_size)
     resized = img.copy()
     # cv2.imshow('resized', resized)
-
 
 def treshold():
     # Küszöbölés
@@ -60,11 +66,13 @@ def create_binary():
     global binary, hugh
     binary = np.ndarray(img.shape)
     binary.fill(0)
-    binary[img < 220] = 255
+    binary[img < 200] = 255
     binary = np.uint8(binary)
     # cv2.imshow('binary', binary)
     # cv2.imwrite('binary_xbar.png', binary)
     hugh = cv2.Canny(img, 50, 200, None, 3)
+    # cv2.imshow('binary', binary)
+    # cv2.imshow('hugh', hugh)
     return binary
 
 
@@ -84,7 +92,7 @@ def rotate():
     all_deg = 0
 
     if lines is not None:
-        print('Detektált egyenesek száma:', len(lines))
+        # print('Detektált egyenesek száma:', len(lines))
         for i in range(0, len(lines)):
             rho = lines[i][0][0]
             theta = lines[i][0][1]
@@ -117,11 +125,11 @@ def rotate():
             # cv2.waitKey(0)
 
     avr = all_deg / len(lines)
-    print('avr: ', avr)
+    # print('avr: ', avr)
 
     rows, cols = img.shape[:2]
     m = cv2.getRotationMatrix2D((cols / 2, rows / 2), avr - 90, 1)
-    print('rotate: ', avr - 90)
+    # print('rotate: ', avr - 90)
     rot = cv2.warpAffine(hugh, m, (cols, rows))
     binary = cv2.warpAffine(binary, m, (cols, rows))
     resized = cv2.warpAffine(resized, m, (cols, rows))
@@ -152,8 +160,8 @@ def morphological_transform():
 
     ret_val, labels, stats, centoids = cv2.connectedComponentsWithStats(bars, None, 8)
     # cv2.imshow('bars', bars)
-    print('stat_len: ', len(stats))
-    print('stats2: ', stats)
+    # print('stat_len: ', len(stats))
+    # print('stats2: ', stats)
     elements = stats.copy()
 
     # Háttér kitörlése

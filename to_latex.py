@@ -37,10 +37,10 @@ def latex():
     elif orientation == 'ybar':
         ratios = ratios * detects.c_new_numbers[0][7]
 
-    print('coordinates: ', ratios)
+    # print('coordinates: ', ratios)
     # todo 5 a max, 4 kell
     length = len(ratios)
-    doc = Document()
+    doc = Document(documentclass='standalone')
 
     # doc.packages.append(Package('fontspec'))
     # doc.packages.append(Package('sansmath'))
@@ -62,7 +62,7 @@ def latex():
             coordinates.append((i + 1, ratios[i]))
             i += 1
 
-    print(coordinates)
+    # print(coordinates)
 
     title_string = ''
     # 0: nincs
