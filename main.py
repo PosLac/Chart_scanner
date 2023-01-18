@@ -3,29 +3,46 @@ import image_edits as edits
 import image_detectations as detects
 import to_latex
 
-def main(fname):
+
+def main(fname, title_pos):
     print("Main started")
     edits.read(fname)
+    print("Read done")
+
     edits.upscale()
+    print("Upscale done")
+
     edits.treshold()
+    print("Treshold done")
+
     edits.create_binary()
+    print("Binary done")
+
     edits.rotate()
+    print("Rotate done")
+
     detects.connected_components()
+    print("Connected done")
+
     edits.morphological_transform()
+    print("Morph done")
+
     detects.bars()
+    print("Bars done")
+
     detects.define_orientation()
-    # 0: nincs
-    # 1: felül
-    # -1: alul
-    detects.detect_title(0)
-    # to_latex()
-    to_latex.latex(detects.orientation, detects.ratios)
+    print("Orientation done")
+
+    # detects.detect_title(title_pos)
+    # print("Title done")
+
+    to_latex.latex(False, detects.orientation, detects.ratios, title_pos=title_pos)
     print("Main completed")
     # todo destroyallwindow
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
-
 # if __name__ == "__main__":
-#     fname = 'chart_xbar.png'
-#     main(fname)
+#     # fname = 'chart_ybar.png'
+#     fname = 'chart_longtitle.png'
+#     main(fname, 1)

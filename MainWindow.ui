@@ -200,33 +200,10 @@
       <string>Szkennelés</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="xBar">
-     <property name="geometry">
-      <rect>
-       <x>960</x>
-       <y>700</y>
-       <width>151</width>
-       <height>81</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>xBar</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="yBar">
-     <property name="geometry">
-      <rect>
-       <x>772</x>
-       <y>700</y>
-       <width>171</width>
-       <height>71</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>yBar</string>
-     </property>
-    </widget>
     <widget class="QPushButton" name="export_button_png">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>1250</x>
@@ -245,6 +222,9 @@
      </property>
     </widget>
     <widget class="QPushButton" name="export_button_pdf">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>1480</x>
@@ -263,6 +243,9 @@
      </property>
     </widget>
     <widget class="QPushButton" name="edit_button">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>1250</x>
@@ -278,6 +261,46 @@
      </property>
      <property name="text">
       <string>Szerkesztés</string>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="above">
+     <property name="geometry">
+      <rect>
+       <x>590</x>
+       <y>740</y>
+       <width>220</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <italic>false</italic>
+       <underline>false</underline>
+      </font>
+     </property>
+     <property name="text">
+      <string>Cím felismerése felül</string>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="below">
+     <property name="geometry">
+      <rect>
+       <x>590</x>
+       <y>780</y>
+       <width>220</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <italic>false</italic>
+       <underline>false</underline>
+      </font>
+     </property>
+     <property name="text">
+      <string>Cím felismerése alul</string>
      </property>
     </widget>
    </widget>

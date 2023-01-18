@@ -14,9 +14,8 @@ elements = None
 def read(fname):
     # Beolvasás
     global img, img_orig
-    print("read s")
     img_orig = cv2.imread(fname, cv2.IMREAD_GRAYSCALE)
-    print("read c")
+
     #img_orig = cv2.imread('Inputs/chart_xbar.png', cv2.IMREAD_GRAYSCALE)
     # img_orig = cv2.imread('Inputs/xbar_str.png', cv2.IMREAD_GRAYSCALE)
     # img_orig = cv2.imread('Inputs/ybar_str.png', cv2.IMREAD_GRAYSCALE)
@@ -166,4 +165,3 @@ def morphological_transform():
 
     # Háttér kitörlése
     elements = np.delete(elements, 0, 0)
-

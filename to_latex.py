@@ -5,6 +5,7 @@ from pylatex import (Document, TikZ, TikZNode,
                      Axis, Plot, Package, Command)
 import image_detectations as detects
 
+
 def to_latex():
     global orientation, ratios, max_y, new_numbers
     ratios = detects.ratios
@@ -35,9 +36,20 @@ chart_title = None
 title_below = None
 
 
-def latex(orientation, ratios):
+def latex(update, orientation, ratios, minMax_array=None, title=None, title_pos=None):
+    print("latex started")
+    plot_options = orientation + ", "
+    if minMax_array:
+        for minMax in minMax_array:
+            print(minMax)
+            if minMax[2]:
+                plot_options = plot_options + minMax[0] + "=" + str(minMax[1]) + ", "
+
+    print("plot_options: ", plot_options)
+
     # ratios = detects.ratios
     # orientation = detects.orientation
+
     if orientation == 'xbar':
         ratios = ratios * detects.r_new_numbers[0][7]
     elif orientation == 'ybar':
@@ -68,35 +80,40 @@ def latex(orientation, ratios):
             coordinates.append((i + 1, ratios[i]))
             i += 1
 
-    # print(coordinates)
+    print("Update: ", update)
+    if not update:
+        if title_pos == 1:
+            detects.chart_title = detects.detect_title(1)
+            plot_options = plot_options + 'title=' + detects.chart_title
+            print("plot_options: " + plot_options)
 
-    title_string = ''
-    # 0: nincs
-    # 1: felül
-    # -1: alul
-    title_type = 0
-    chart_title = detects.detect_title(title_type)
+        elif title_pos == -1:
+            detects.chart_title = detects.detect_title(-1)
+            print("title below: " + detects.chart_title)
 
-    if title_type == 1:
-        #print(chart_title)
-        title_string = ', title = ' + chart_title
+    else:
+        detects.chart_title = title
+        if title_pos == 1:
+            plot_options = plot_options + 'title=' + detects.chart_title
+            print("plot_options: " + plot_options)
 
+        elif title_pos == -1:
+            print("title below: " + detects.chart_title)
 
     with doc.create(TikZ()):
         # plot_options = orientation + ', title style={align=left}, ymin = 0, ymax = 9, xmin = 0, xmax = 9'
-        plot_options = orientation + ', name=mygraph' + title_string \
-                       # + ', xmin = ' + str(detects.r_new_numbers[-1][7])\
-                       # + ', xmax = ' + str(detects.r_new_numbers[0][7])\
-                       # + ', ymin = ' + str(detects.c_new_numbers[-1][7])\
-                       # + ', ymax = ' + str(detects.c_new_numbers[0][7])
+        plot_options = plot_options + ', name=mygraph'
+        #     # + ', xmin = ' + str(detects.r_new_numbers[-1][7])\
+        # # + ', xmax = ' + str(detects.r_new_numbers[0][7])\
+        # # + ', ymin = ' + str(detects.c_new_numbers[-1][7])\
+        # # + ', ymax = ' + str(detects.c_new_numbers[0][7])
 
         # plot_options = orientation + ', name=mygraph' + title_string
         with doc.create(Axis(options=plot_options)) as plot:
             plot.append(Plot(coordinates=coordinates))
 
-        if title_type == -1:
-            node_chain = TikZNode(text=chart_title,
-                                  options=TikZOptions('below =of mygraph'))
+        if title_pos == -1:
+            node_chain = TikZNode(text=detects.chart_title, options=TikZOptions('below =of mygraph'))
             doc.append(node_chain)
 
         with doc.create(TikZNode()) as title:

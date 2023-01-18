@@ -6,7 +6,7 @@ import image_edits as edits
 
 pytesseract.pytesseract.tesseract_cmd = 'D:/Apps/Tesseract/tesseract.exe'
 # single_digit = r'--oem 3 --psm 10 -c tessedit_char_whitelist=0123456789'
-single_digit = r'--oem 3 --psm 7'
+single_digit = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'
 config_title = r'--oem 3 --psm 7'
 
 chart_with_bars_img = None
@@ -30,25 +30,20 @@ def connected_components():
 
     resized = edits.resized
     binary = edits.create_binary()
+
     ret_val, labels, stats, centoids = cv2.connectedComponentsWithStats(binary, None, 8)
-    # print('cent: ', centoids)
     i = 1
-    # print(binary.shape)
     x_half = binary.shape[0] / 3
     y_half = binary.shape[1] / 3
 
     column = []
     row = []
-    # print(centoids)
-    # print()
 
     while i < len(stats):
         if stats[i][0] < x_half:
-            # print('c: ', centoids[i], centoids[i][0] - centoids[i-1][0], centoids[i][0]/10)
             column.append(stats[i])
 
         if stats[i][1] > y_half:
-            # print('r: ', centoids[i])
             row.append(stats[i])
 
         i += 1
@@ -59,8 +54,6 @@ def connected_components():
         for j in range(0, len(r_final)-i-1):
             if r_final[j][0] < r_final[j+1][0]:
                 r_final[j], r_final[j + 1] = r_final[j + 1], r_final[j]
-
-
 
     number_stats = np.concatenate((c_final, r_final), axis=0)
     labels_norm = cv2.normalize(labels, None, 0, 65535, cv2.NORM_MINMAX)
@@ -74,16 +67,7 @@ def connected_components():
             big_res.append(stat)
 
     res_max = max(res) + 10
-    # print('max: ' + str(res_max))
-    chart_with_bars = big_res[1]
-    # print(chart_with_bars)
     chart_with_bars_img = binary.copy()
-
-    # cv2.imshow('resiz', resized)
-    # chart_title = pytesseract.pytesseract.image_to_string(resized, config=config_title)
-    # print('chart_title: ', chart_title)
-
-    # print(stats)
 
     r_numbers = []
     c_numbers = []
@@ -94,7 +78,6 @@ def connected_components():
             res.append(row_num)
             start = (row_num[0], row_num[1])
             end = (row_num[0] + row_num[2], row_num[1] + row_num[3])
-            # cv2.rectangle(labels_norm, start, end, 65535)
             cv2.rectangle(edits.resized, start, end, 0, 2)
 
     for col_num in c_final:
@@ -103,7 +86,6 @@ def connected_components():
             res.append(col_num)
             start = (col_num[0], col_num[1])
             end = (col_num[0] + col_num[2], col_num[1] + col_num[3])
-            # cv2.rectangle(labels_norm, start, end, 65535)
             cv2.rectangle(edits.resized, start, end, 0, 3)
 
     # for stat in number_stats:
@@ -171,13 +153,31 @@ def connected_components():
     #     # cv2.imwrite(str(numbers_int) + ': ' + str(i)+'.png', img_re)
     #     i += 1
     c_numbers_str = []
+
+    ret_val, labels, stats, centoids = cv2.connectedComponentsWithStats(binary, None, 8)
+    # print("stats: ", stats)
+    sorted_stats = sorted(stats, key=lambda x: x[4], reverse=True)
+    stats_max = sorted_stats[1]
+    # print("stats_max: ", stats_max)
+    x1 = stats_max[0]
+    x2 = x1+stats_max[2]
+    y1 = stats_max[1]
+    y2 = y1+stats_max[3]
+
+    img_b = binary
+    # cv2.imshow("img", img_b)
+    img_b[y1:y2, x1:x2] = 0
+    # cv2.imshow("img", img_b)
+    cv2.waitKey(0)
+
     for number in c_final:
         x1 = number[0] - xplus
         x2 = number[0] + number[2] + xplus
         y1 = number[1] - yplus
         y2 = number[1] + number[3] + yplus
         # img_re = resized[y1:y2, x1:x2]
-        img_re = binary[y1:y2, x1:x2]
+
+        img_re = img_b[y1:y2, x1:x2]
         img_re = 255 - img_re
         chart_with_bars_img[y1:y2 - yplus, x1:x2 - xplus] = 0
 
@@ -188,7 +188,6 @@ def connected_components():
         # cv2.imshow(str(title)+': '+str(i)+'.', img_re)
         # cv2.imwrite(str(numbers_int) + ': ' + str(i)+'.png', img_re)
         i += 1
-
     # print('c_numbers_str: ', c_numbers_str)
 
 
@@ -211,7 +210,7 @@ def connected_components():
         y1 = number[1] - yplus
         y2 = number[1] + number[3] + yplus
         # img_re = resized[y1:y2, x1:x2]
-        img_re = binary[y1:y2, x1:x2]
+        img_re = img_b[y1:y2, x1:x2]
         img_re = 255 - img_re
         chart_with_bars_img[y1:y2 - yplus, x1:x2 - xplus] = 0
 
@@ -221,9 +220,7 @@ def connected_components():
         # cv2.imshow(str(title)+': '+str(i)+'.', img_re)
         # cv2.imwrite(str(numbers_int) + ': ' + str(i)+'.png', img_re)
         i += 1
-
-    # cv2.waitKey(0)
-
+    cv2.waitKey(0)
     # print('r_numbers_str: ', r_numbers_str)
     row_type = None
     row_type = 'str'
@@ -378,9 +375,9 @@ def row_int():
             numbers_str[j] = str(numbers_str[j])
         j += 1
 
-    # print('numbers: ', numbers_str)
-    # print('c_numbers: ', c_new_numbers)
-    # print('numbers_str: ', numbers_str)
+    print('numbers: ', numbers_str)
+    print('c_numbers: ', c_new_numbers)
+    print('numbers_str: ', numbers_str)
     j = 0
 
     for c_number in c_numbers:
@@ -420,14 +417,15 @@ def row_int():
 
     # print('has none: ', has_none)
 
-    cv2.imwrite('rects.png', resized)
+    # cv2.imwrite('rects.png', resized)
+
     # to_show = cv2.resize(resized, (int(resized.shape[1]/3), int(resized.shape[0]/3)))
     # cv2.imshow('rects', to_show)
     # cv2.imwrite('chart_with_bars_img.png', chart_with_bars_img)
     # print()
     # print('Kompenensek száma:', len(r_numbers) + len(c_numbers))
 
-    # print('numbers: ', numbers)
+    print('numbers: ', numbers)
 
 def detect_title(has_title):
 
@@ -443,7 +441,7 @@ def detect_title(has_title):
     chart_title = pytesseract.pytesseract.image_to_string(title_img, config=config_title)
     # todo
     # chart_title = ''
-    # print(chart_title)
+    print(chart_title)
     return chart_title
 
 def bars():
@@ -533,5 +531,5 @@ def define_orientation():
     height = int(resized.shape[0] / percent)
     resized = cv2.resize(resized, (width, height))
     # cv2.imshow('rects_' + orientation, resized)
-    # cv2.imwrite('rects_'+orientation+'.png', resized)
+    cv2.imwrite('rects_'+orientation+'.png', resized)
     # cv2.imwrite('bars_'+orientation+'.png', bars)
