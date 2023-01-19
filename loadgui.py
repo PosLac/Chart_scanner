@@ -1,26 +1,20 @@
 from shutil import copyfile
-
-import cv2
-import numpy as np
-from pyqt5_plugins.examplebuttonplugin import QtGui
-
 import image_detectations as detects
 import main
 import os
 import sys
+import to_latex
 
 from PyQt5 import uic
 from PyQt5.QtCore import QObject, QThread
 from PyQt5.QtCore import pyqtSignal as Signal, pyqtSlot as Slot
 from PyQt5.QtGui import QPixmap, QMovie
-from PyQt5.QtWidgets import QFileDialog, QMainWindow, QPushButton, QLabel, QApplication, QTextEdit, QWidget, \
-    QRadioButton, QLineEdit, QCheckBox, QSpinBox
-
-import to_latex
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QPushButton, QLabel, QApplication, QTextEdit, \
+    QRadioButton, QLineEdit, QCheckBox, QSpinBox, QGroupBox
 
 
 class MainWindow(QMainWindow):
-    work_requested = Signal(str)
+    work_requested = Signal(str, bool)
 
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -28,22 +22,28 @@ class MainWindow(QMainWindow):
         self.edit_window = None
         self.openFiles = self.findChild(QPushButton, "openFiles")
         self.scanButton = self.findChild(QPushButton, "scan")
-        self.closeButton = self.findChild(QPushButton, "closeButton")
         self.export_button_pdf = self.findChild(QPushButton, "export_button_pdf")
         self.export_button_png = self.findChild(QPushButton, "export_button_png")
         self.edit_button = self.findChild(QPushButton, "edit_button")
+        self.title_group = self.findChild(QGroupBox, "title_group")
         self.label = self.findChild(QLabel, "fileName")
         self.inputChart = self.findChild(QLabel, "inputChart")
         self.outputChart = self.findChild(QLabel, "outputChart")
         self.export_name = self.findChild(QTextEdit, "export_name")
 
-        self.export_button_png.setEnabled(False)
-        self.export_button_pdf.setEnabled(False)
-        self.edit_button.setEnabled(False)
+        self.title_group.setHidden(True)
+        self.scanButton.setHidden(True)
+        self.export_button_png.setHidden(True)
+        self.export_button_pdf.setHidden(True)
+        self.edit_button.setHidden(True)
 
         self.title_pos = 0
         self.above = self.findChild(QRadioButton, "above")
+        self.above.setChecked(False)
         self.below = self.findChild(QRadioButton, "below")
+        self.below.setChecked(False)
+        self.no_title = self.findChild(QRadioButton, "no_title")
+        self.no_title.setChecked(True)
 
         self.xBar = self.findChild(QPushButton, "xBar")
         self.yBar = self.findChild(QPushButton, "yBar")
@@ -55,9 +55,6 @@ class MainWindow(QMainWindow):
         self.edit_button.clicked.connect(self.open_edit_window)
         self.openFiles.clicked.connect(self.clicker)
         self.scanButton.clicked.connect(self.scanChart)
-        self.closeButton.clicked.connect(self.closeWin)
-        # self.xBar.clicked.connect(self.xBar_scan)
-        # self.yBar.clicked.connect(self.yBar_scan)
 
         self.worker = Worker()
         self.worker_thread = QThread()
@@ -74,7 +71,9 @@ class MainWindow(QMainWindow):
         global fname
         fname = QFileDialog.getOpenFileName(None, "Open file", "")[0]
         if fname:
-            self.scanButton.setEnabled(True)
+            self.scanButton.setHidden(False)
+            self.title_group.setHidden(False)
+
             self.label.setText(fname)
             input_chart = QPixmap(fname)
             input_chart = input_chart.scaledToWidth(700)
@@ -92,12 +91,11 @@ class MainWindow(QMainWindow):
             self.title_pos = 1
         elif self.below.isChecked():
             self.title_pos = -1
+        elif self.no_title.isChecked():
+            self.title_pos = 0
 
-        self.work_requested.emit(fname)
+        self.work_requested.emit(fname, False)
         self.spinner.start()
-
-    def closeWin(self):
-        self.close()
 
     def export(self, type):
         input_file = "tikzdraw." + type
@@ -107,46 +105,24 @@ class MainWindow(QMainWindow):
         print("copy done")
 
     def open_edit_window(self):
-        print("Edit")
         self.edit_window = EditWindow()
-        print("Edit2")
-
-    def xBar_scan(self):
-        self.spinner.start()
-        x_bar = "D:/SZTE/Szakdoga/Let's_Scan/chart_xbar.png"
-
-        self.label.setText(x_bar)
-        input_chart = QPixmap(x_bar)
-        input_chart = input_chart.scaledToWidth(700)
-        self.inputChart.setPixmap(input_chart)
-
-        self.work_requested.emit(x_bar)
-
-    def yBar_scan(self):
-
-        self.spinner.start()
-        y_bar = "D:/SZTE/Szakdoga/Let's_Scan/chart_ybar.png"
-
-        self.label.setText(y_bar)
-        input_chart = QPixmap(y_bar)
-        input_chart = input_chart.scaledToWidth(700)
-        self.inputChart.setPixmap(input_chart)
-
-        self.work_requested.emit(y_bar)
 
 
 class EditWindow(QMainWindow):
-    work_requested = Signal(str)
+    work_requested = Signal(str, bool)
 
     def __init__(self):
         super(EditWindow, self).__init__()
+        self.minMax_array = None
         uic.loadUi("EditWindow.ui", self)
 
-        self.title_pos = ""
+        self.title_pos = 0
         self.above = self.findChild(QRadioButton, "above")
         self.below = self.findChild(QRadioButton, "below")
+        self.no_title = self.findChild(QRadioButton, "no_title")
         self.title = self.findChild(QLineEdit, "title_text")
         self.update_button = self.findChild(QPushButton, "update_button")
+        self.back_button = self.findChild(QPushButton, "back")
         self.loaded_chart = self.findChild(QLabel, "chart")
         self.error_label = self.findChild(QLabel, "error_label")
 
@@ -156,7 +132,9 @@ class EditWindow(QMainWindow):
         print(self.export_button_pdf)
         self.export_button_pdf.clicked.connect(lambda: UIWindow.export("pdf"))
         self.export_button_png.clicked.connect(lambda: UIWindow.export("png"))
+        self.back_button.clicked.connect(lambda: self.close())
 
+        self.title_str = ""
         self.title.setText(detects.chart_title)
         input_chart = QPixmap("tikzdraw.png")
         input_chart = input_chart.scaledToWidth(700)
@@ -186,10 +164,9 @@ class EditWindow(QMainWindow):
         self.yMin_check.stateChanged.connect(lambda: self.minMax_toggle("yMin"))
         self.yMax_check.stateChanged.connect(lambda: self.minMax_toggle("yMax"))
 
-        self.above.toggled.connect(self.above_title)
-        self.above.setChecked(False)
-        self.below.toggled.connect(self.below_title)
-        self.below.setChecked(False)
+        self.above.setChecked(UIWindow.above.isChecked())
+        self.below.setChecked(UIWindow.below.isChecked())
+        self.no_title.setChecked(UIWindow.no_title.isChecked())
 
         self.update_button.clicked.connect(self.update_chart)
 
@@ -211,12 +188,6 @@ class EditWindow(QMainWindow):
     def complete(self):
         print("complete")
 
-    def above_title(self):
-        self.title_pos = 1
-
-    def below_title(self):
-        self.title_pos = -1
-
     def minMax_toggle(self, val):
         minMax = self.findChild(QSpinBox, val)
         minMax.setEnabled(not minMax.isEnabled())
@@ -226,36 +197,40 @@ class EditWindow(QMainWindow):
 
     def update_chart(self):
         print("Update start")
+        error_list = ""
         self.update_bool = True
         self.xMin_en = self.xMin_check.isChecked()
         self.xMax_en = self.xMax_check.isChecked()
         self.yMin_en = self.yMin_check.isChecked()
         self.yMax_en = self.yMax_check.isChecked()
 
-        self.work_requested.emit("")
-        self.spinner.start()
+        if self.above.isChecked():
+            self.title_pos = 1
+        elif self.below.isChecked():
+            self.title_pos = -1
+        elif self.no_title.isChecked():
+            self.title_pos = 0
 
-        title_str = ""
+        if self.title.text() == "" and self.title_pos != 0:
+            error_list = error_list + "\n Amennyiben nem szeretne címet megadni, válassza ki a 'Nincs cím' opciót."
+            self.error_label.setText(error_list)
+
         if self.title.text():
-            title_str = self.title.text()
-            print(title_str)
+            self.title_str = self.title.text()
+            print(self.title_str)
 
         if (self.xMin_en and self.xMax_en and self.xMin.value() > self.xMax.value()) or \
                 (self.yMin_en and self.yMin_en and self.yMin.value() > self.yMax.value()):
-            # todo popup ablak vagy vmi
-            self.error_label.setText("A max értéke nagyobb kell, legyen, mint a min.")
-            print("A maximum értéke nagyobb kell, legyen, mint a minimum.")
+            error_list = error_list + "\n A maximum értéke nagyobb kell, hogy legyen, mint a minimum."
+            self.error_label.setText(error_list)
 
         else:
-            minMax_array = [("xmin", self.xMin.value(), self.xMin_en), ("xmax", self.xMax.value(), self.xMax_en),
-                            ("ymin", self.yMin.value(), self.yMin_en), ("ymax", self.yMax.value(), self.yMax_en)]
-            print(self.orientation, self.ratios, minMax_array, title_str, self.title_pos)
-            to_latex.latex(self.update_bool, self.orientation, self.ratios, minMax_array, title_str, self.title_pos)
-
-            os.system('pdf2png.bat tikzdraw 300')
-            input_chart = QPixmap("tikzdraw.png")
-            input_chart = input_chart.scaledToWidth(700)
-            self.loaded_chart.setPixmap(input_chart)
+            self.loaded_chart.setPixmap(QPixmap())
+            self.loaded_chart.setMovie(self.spinner)
+            self.spinner.start()
+            self.minMax_array = [("xmin", self.xMin.value(), self.xMin_en), ("xmax", self.xMax.value(), self.xMax_en),
+                                 ("ymin", self.yMin.value(), self.yMin_en), ("ymax", self.yMax.value(), self.yMax_en)]
+            self.work_requested.emit("", True)
 
 
 class Worker(QObject):
@@ -263,45 +238,38 @@ class Worker(QObject):
     completed = Signal()
     chart = Signal(QPixmap)
 
-    @Slot(str)
-    def do_work(self, name):
+    @Slot(str, bool)
+    def do_work(self, name, update):
         print("do_work")
         if name:
             print("mainw")
+            print(name)
+            UIWindow.outputChart.setPixmap(QPixmap())
             UIWindow.outputChart.setMovie(UIWindow.spinner)
             self.fname.emit(name)
-        else:
-            print("editw")
-            UIWindow.edit_window.loaded_chart.setMovie(UIWindow.edit_window.spinner)
-            self.fname.emit("")
-        if name:
-            print("main")
-            # print("UIWindow.title_pos: ", UIWindow.title_pos)
             main.main(name, UIWindow.title_pos)
+
+        if update:
+            to_latex.latex(UIWindow.edit_window.update_bool, UIWindow.edit_window.orientation,
+                           UIWindow.edit_window.ratios, UIWindow.edit_window.minMax_array,
+                           UIWindow.edit_window.title_str, UIWindow.edit_window.title_pos)
+            print("latex")
 
         os.system('pdf2png.bat tikzdraw 300')
         output_chart = QPixmap("tikzdraw.png")
         output_chart = output_chart.scaledToWidth(700)
         print("worker done")
-        self.completed.emit()
         if name:
             UIWindow.outputChart.setPixmap(output_chart)
-            UIWindow.export_button_png.setEnabled(True)
-            UIWindow.export_button_pdf.setEnabled(True)
-            UIWindow.edit_button.setEnabled(True)
+            UIWindow.export_button_png.setHidden(False)
+            UIWindow.export_button_pdf.setHidden(False)
+            UIWindow.edit_button.setHidden(False)
             print("MainWindow")
         else:
-            print("1")
-
             UIWindow.edit_window.loaded_chart.setPixmap(output_chart)
-            print("2")
-
-            # UIWindow.edit_window.export_button_png.setEnabled(True)
-            # UIWindow.edit_window.export_button_pdf.setEnabled(True)
             print("EditWindow")
-
+        self.completed.emit()
 
 app = QApplication(sys.argv)
 UIWindow = MainWindow()
-# editWindow = EditWindow()
 app.exec_()

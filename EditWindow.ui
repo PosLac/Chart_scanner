@@ -29,9 +29,9 @@
     <widget class="QPushButton" name="update_button">
      <property name="geometry">
       <rect>
-       <x>270</x>
-       <y>550</y>
-       <width>201</width>
+       <x>150</x>
+       <y>820</y>
+       <width>200</width>
        <height>71</height>
       </rect>
      </property>
@@ -47,8 +47,8 @@
     <widget class="QGroupBox" name="min_max_group">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>230</y>
+       <x>30</x>
+       <y>260</y>
        <width>431</width>
        <height>191</height>
       </rect>
@@ -208,7 +208,7 @@
        <x>30</x>
        <y>30</y>
        <width>800</width>
-       <height>171</height>
+       <height>221</height>
       </rect>
      </property>
      <property name="font">
@@ -301,6 +301,26 @@
        <string/>
       </property>
      </widget>
+     <widget class="QRadioButton" name="no_title">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>140</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <italic>false</italic>
+        <underline>false</underline>
+       </font>
+      </property>
+      <property name="text">
+       <string>Nincs cím</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QLabel" name="chart">
      <property name="geometry">
@@ -314,26 +334,39 @@
      <property name="text">
       <string/>
      </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
     </widget>
     <widget class="QLabel" name="error_label">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>430</y>
-       <width>431</width>
-       <height>51</height>
+       <x>30</x>
+       <y>460</y>
+       <width>901</width>
+       <height>241</height>
       </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
      <property name="font">
       <font>
        <pointsize>12</pointsize>
       </font>
      </property>
+     <property name="styleSheet">
+      <string notr="true">color: rgb(222, 0, 0);
+background-color: rgb(218, 218, 218);</string>
+     </property>
      <property name="text">
       <string/>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
      </property>
     </widget>
     <widget class="QPushButton" name="export_button_png">
@@ -376,6 +409,24 @@
      </property>
      <property name="text">
       <string>PDF Exportálása</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="back">
+     <property name="geometry">
+      <rect>
+       <x>400</x>
+       <y>820</y>
+       <width>200</width>
+       <height>71</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Vissza</string>
      </property>
     </widget>
    </widget>

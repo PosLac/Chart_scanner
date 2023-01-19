@@ -12,7 +12,7 @@ def main(fname, title_pos):
     edits.upscale()
     print("Upscale done")
 
-    edits.treshold()
+    edits.threshold()
     print("Treshold done")
 
     edits.create_binary()
@@ -33,16 +33,7 @@ def main(fname, title_pos):
     detects.define_orientation()
     print("Orientation done")
 
-    # detects.detect_title(title_pos)
-    # print("Title done")
-
     to_latex.latex(False, detects.orientation, detects.ratios, title_pos=title_pos)
     print("Main completed")
     # todo destroyallwindow
-    # cv2.waitKey(0)
     # cv2.destroyAllWindows()
-
-# if __name__ == "__main__":
-#     # fname = 'chart_ybar.png'
-#     fname = 'chart_longtitle.png'
-#     main(fname, 1)

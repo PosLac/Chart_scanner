@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pylatex import (Document, TikZ, TikZNode,
                      TikZOptions,
-                     Axis, Plot, Package, Command)
+                     Axis, Plot, Command)
 import image_detectations as detects
 
 
@@ -16,14 +16,9 @@ def to_latex():
 
     if orientation == 'xbar':
         y = np.flip(y)
-        # y = sorted(y, reverse=True)
         plt.barh(x, y, 0.25)
     else:
         plt.bar(x, y, 0.25)
-
-    # plt.title()
-    # plt.xlabel()
-    # plt.ylabel()
     plt.show()
 
     ratios = ratios / new_numbers[0][5]
@@ -47,21 +42,14 @@ def latex(update, orientation, ratios, minMax_array=None, title=None, title_pos=
 
     print("plot_options: ", plot_options)
 
-    # ratios = detects.ratios
-    # orientation = detects.orientation
-
     if orientation == 'xbar':
         ratios = ratios * detects.r_new_numbers[0][7]
     elif orientation == 'ybar':
         ratios = ratios * detects.c_new_numbers[0][7]
 
-    # print('coordinates: ', ratios)
-    # todo 5 a max, 4 kell
     length = len(ratios)
     doc = Document(documentclass='standalone')
 
-    # doc.packages.append(Package('fontspec'))
-    # doc.packages.append(Package('sansmath'))
     doc.preamble.append(Command('usetikzlibrary', 'positioning'))
 
     coordinates = []
@@ -74,9 +62,7 @@ def latex(update, orientation, ratios, minMax_array=None, title=None, title_pos=
             i += 1
 
     elif orientation == 'ybar':
-        # ratios = np.flip(ratios)
         while i < length:
-            # coordinates.append((ratios[i], i+1))
             coordinates.append((i + 1, ratios[i]))
             i += 1
 
@@ -101,14 +87,7 @@ def latex(update, orientation, ratios, minMax_array=None, title=None, title_pos=
             print("title below: " + detects.chart_title)
 
     with doc.create(TikZ()):
-        # plot_options = orientation + ', title style={align=left}, ymin = 0, ymax = 9, xmin = 0, xmax = 9'
         plot_options = plot_options + ', name=mygraph'
-        #     # + ', xmin = ' + str(detects.r_new_numbers[-1][7])\
-        # # + ', xmax = ' + str(detects.r_new_numbers[0][7])\
-        # # + ', ymin = ' + str(detects.c_new_numbers[-1][7])\
-        # # + ', ymax = ' + str(detects.c_new_numbers[0][7])
-
-        # plot_options = orientation + ', name=mygraph' + title_string
         with doc.create(Axis(options=plot_options)) as plot:
             plot.append(Plot(coordinates=coordinates))
 
