@@ -1,21 +1,27 @@
-import cv2
 import image_edits as edits
 import image_detectations as detects
 import to_latex
 
 
 def main(fname, title_pos):
+    """
+
+    Args:
+        fname:
+        title_pos:
+    """
     print("Main started")
-    edits.read(fname)
+
+    edits.read_img(fname)
     print("Read done")
 
     edits.upscale()
     print("Upscale done")
 
-    edits.threshold()
+    edits.ni_black_threshold()
     print("Treshold done")
 
-    edits.create_binary()
+    edits.threshold()
     print("Binary done")
 
     edits.rotate()
@@ -37,3 +43,6 @@ def main(fname, title_pos):
     print("Main completed")
     # todo destroyallwindow
     # cv2.destroyAllWindows()
+
+
+# main(fname="chart_ybar.png", title_pos=0)

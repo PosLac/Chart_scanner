@@ -1,62 +1,94 @@
 import math
-import time
-
 import cv2
-import numpy as np
-import image_detectations as detects
+import numpy
+import main.image_detectations as detects
 
-num_size = 0
-percent = 2
+UPSCALE_RATE = 2
+NUM_SIZE = 0
+K = -1
+BLOCK_SIZE = 5
+
 resized = None
 elements = None
+img_original = None
+img = None
+binary = None
+hugh = None
 
 
-def read(fname):
-    # Beolvasás
-    global img, img_orig
-    img_orig = cv2.imread(fname, cv2.IMREAD_GRAYSCALE)
-    img = img_orig.copy()
+def read_img(file_name: str) -> numpy.ndarray:
+    """
+    Reads image and convert to grayscale
+
+    Args:
+        file_name (str): path to the image
+
+    Returns:
+        img (numpy.ndarray): retrieved gray image
+    """
+    global img, img_original
+
+    img_original = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
+    img = img_original.copy()
     return img
 
 
-def upscale():
-    # Felskálázás
-    global img, num_size, resized, percent
-    width = int(img.shape[1] * percent)
-    height = int(img.shape[0] * percent)
+def upscale() -> None:
+    """
+    Scales up the retrieved image with the given upscale value for easier scanning
+
+    Returns:
+        None
+    """
+    global img, NUM_SIZE, resized
+
+    height = int(img.shape[0] * UPSCALE_RATE)
+    width = int(img.shape[1] * UPSCALE_RATE)
     img = cv2.resize(img, (width, height))
-    num_size = img.shape[0] * img.shape[1] / 1000
+    NUM_SIZE = img.shape[0] * img.shape[1] / 1000  # todo what is NUM_SIZE?
     resized = img.copy()
 
 
-def threshold():
-    # Küszöbölés
+def ni_black_threshold() -> None:
+    """
+    Thresholding of the image
+
+    Returns:
+        None
+    """
     global img
-    k = -1
-    block_size = 5
-    img = cv2.ximgproc.niBlackThreshold(img, 255, cv2.THRESH_TRUNC, block_size, k, binarizationMethod=0, r=108)
+    img = cv2.ximgproc.niBlackThreshold(img, 255, cv2.THRESH_TRUNC, BLOCK_SIZE, K, binarizationMethod=0, r=108)
 
 
-def create_binary():
-    # Bináris létrehozása
+def threshold() -> numpy.ndarray:
+    """
+    Converts binary
+
+    Returns:
+        binary (numpy.ndarray):
+    """
     global binary, hugh
-    binary = np.ndarray(img.shape)
+    binary = numpy.uint8(numpy.ndarray(img.shape))
     binary.fill(0)
     binary[img < 200] = 255
-    binary = np.uint8(binary)
     hugh = cv2.Canny(img, 50, 200, None, 3)
+    # cv2.imshow("hugh", hugh)
     return binary
 
 
 def rotate():
-    global binary, percent, img_orig, hugh, resized, img
+    """
+    Rotates the picture if not straight
+
+    """
+    global binary, UPSCALE_RATE, img_original, resized, img
 
     cdst = cv2.cvtColor(hugh, cv2.COLOR_GRAY2BGR)
 
     lines = None
-    expectation = 200 * percent
+    expectation = 200 * UPSCALE_RATE
     while lines is None or len(lines) < 10:
-        lines = cv2.HoughLines(hugh, 1, np.pi / 50, expectation, None, 0, 0)
+        lines = cv2.HoughLines(hugh, 1, numpy.pi / 50, expectation, None, 0, 0)
         expectation = expectation - 5
 
     sizemax = math.sqrt(cdst.shape[0] ** 2 + cdst.shape[1] ** 2)
@@ -97,7 +129,10 @@ def rotate():
     img = cv2.warpAffine(img, m, (cols, rows))
 
 
-def morphological_transform():
+def morphological_transform() -> None:
+    """
+
+    """
     global elements, bar_hs, chart_with_bars_img, bars
     # cv2.imshow('chart_with_bars_img', chart_with_bars_img)
     retval = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
@@ -107,17 +142,17 @@ def morphological_transform():
     bars = cv2.dilate(bars, retval, None, None, 4)
     bars = cv2.dilate(bars, retval, None, None, 4)
     # cv2.imshow('bars', bars)
-    bars_p = np.ndarray(bars.shape)
+    bars_p = numpy.ndarray(bars.shape)
     bars_p.fill(0)
     bars_p[bars > 0] = 255
-    bars = np.uint8(bars_p)
+    bars = numpy.uint8(bars_p)
     # cv2.imwrite('bars1.png', bars)
 
-    ret_val, labels, stats, centoids = cv2.connectedComponentsWithStats(bars, None, 8)
+    _, _, stats, _ = cv2.connectedComponentsWithStats(bars, None, 8)
     # cv2.imshow('bars', bars)
     # print('stat_len: ', len(stats))
     # print('stats2: ', stats)
     elements = stats.copy()
 
     # Háttér kitörlése
-    elements = np.delete(elements, 0, 0)
+    elements = numpy.delete(elements, 0, 0)

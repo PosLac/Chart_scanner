@@ -2,7 +2,7 @@ import re
 import cv2
 import numpy as np
 import pytesseract
-import image_edits as edits
+import main.image_edits as edits
 
 pytesseract.pytesseract.tesseract_cmd = 'D:/Apps/Tesseract/tesseract.exe'
 # single_digit = r'--oem 3 --psm 10 -c tessedit_char_whitelist=0123456789'
@@ -16,48 +16,112 @@ orientation = None
 chart_title = None
 c_new_numbers = []
 r_new_numbers = []
+col_nums = []
+row_nums = []
+resized = None
+binary = None
+
+
+# Fill two arrays with values from each x and y coordinate axes
+def isolate_x_y() -> None:
+    """
+
+    """
+    global resized, binary, col_nums, row_nums, number_of_components, labels, stats, centoids
+
+    resized = edits.resized
+    binary = edits.threshold()
+
+    # number_of_components = background included
+    # labels = matrix, 0-background, 1-component
+    # stats = enclosing rectangle upper left point, width, length, number of pixels
+    # centoids = center points of object
+    number_of_components, labels, stats, centoids = cv2.connectedComponentsWithStats(binary, None, 8)
+
+    # searching in the left third for y-axis and bottom third for x-axis of the picture
+    row_third = binary.shape[0] / 3
+    col_third = binary.shape[1] / 3
+
+    for i in range(1, number_of_components):
+        if stats[i][0] < row_third:
+            col_nums.append(stats[i])
+
+        if stats[i][1] > col_third:
+            row_nums.append(stats[i])
+
+
+def cut_outstandings():
+    global col_nums, row_nums, r_final, c_final
+    j = 0
+    std_c = 100
+    std_r = 100
+    local_col_nums = col_nums
+    local_row_nums = row_nums
+
+    while std_c > 10 or std_r > 10:
+        # print(j, '. iteration')
+
+        sum_c = 0
+        # x coordinate of column values
+        for c in col_nums:
+            sum_c += c[0]
+
+        mean_c = sum_c / len(col_nums)
+
+        c_final = []
+        c_x = []
+        for x in col_nums:
+            c_x.append(x[0])
+        std_c = np.std(c_x)
+
+        for c in col_nums:
+            # print(c, abs(c[0] - mean_c), std_c)
+            if abs(c[0] - mean_c) < std_c or std_c < 5:
+                c_final.append(c)
+        col_nums = c_final
+
+        ########################################
+
+        sum_r = 0
+        for r in row_nums:
+            sum_r += r[1]
+
+        mean_r = sum_r / len(row_nums)
+
+        r_final = []
+        r_y = []
+        for y in row_nums:
+            r_y.append(y[1])
+
+        std_r = np.std(r_y)
+        for r in row_nums:
+            if abs(r[1] - mean_r) < std_r or std_r < 5:
+                r_final.append(r)
+        row_nums = r_final
+
+        j += 1
 
 
 def connected_components():
-    # Összefüggő elemek keresése
     global binary, num_size, percent, resized, chart_with_bars_img, numbers, centoids, stats, max_y, new_numbers, \
-        chart_title, r_numbers, c_numbers, elements, numbers_str, xplus, yplus, column, row,\
-        r_final, c_final, c_numbers_str, r_numbers_str
+        chart_title, r_numbers, c_numbers, elements, numbers_str, xplus, yplus, col_nums, row_nums, \
+        r_final, c_final, c_numbers_str, r_numbers_str, labels
 
-    resized = edits.resized
-    binary = edits.create_binary()
-
-    ret_val, labels, stats, centoids = cv2.connectedComponentsWithStats(binary, None, 8)
-    i = 1
-    x_half = binary.shape[0] / 3
-    y_half = binary.shape[1] / 3
-
-    column = []
-    row = []
-
-    while i < len(stats):
-        if stats[i][0] < x_half:
-            column.append(stats[i])
-
-        if stats[i][1] > y_half:
-            row.append(stats[i])
-
-        i += 1
-
+    isolate_x_y()
     cut_outstandings()
 
-    for i in range(0, len(r_final)-1):
-        for j in range(0, len(r_final)-i-1):
-            if r_final[j][0] < r_final[j+1][0]:
+    for i in range(0, len(r_final) - 1):
+        for j in range(0, len(r_final) - i - 1):
+            if r_final[j][0] < r_final[j + 1][0]:
                 r_final[j], r_final[j + 1] = r_final[j + 1], r_final[j]
 
-    number_stats = np.concatenate((c_final, r_final), axis=0)
+    # number_stats = np.concatenate((c_final, r_final), axis=0)
     labels_norm = cv2.normalize(labels, None, 0, 65535, cv2.NORM_MINMAX)
     numbers = []
     res = []
     big_res = []
     for stat in stats:
-        if stat[4] < edits.num_size:
+        if stat[4] < edits.NUM_SIZE:
             res.append(stat[2] * stat[3])
         else:
             big_res.append(stat)
@@ -86,7 +150,7 @@ def connected_components():
 
     numbers_str = []
     i = 0
-    percent = edits.percent
+    percent = edits.UPSCALE_RATE
     xplus = int(10 * percent)
     yplus = int(9 * percent)
 
@@ -97,9 +161,9 @@ def connected_components():
     sorted_stats = sorted(stats, key=lambda x: x[4], reverse=True)
     stats_max = sorted_stats[1]
     x1 = stats_max[0]
-    x2 = x1+stats_max[2]
+    x2 = x1 + stats_max[2]
     y1 = stats_max[1]
-    y2 = y1+stats_max[3]
+    y2 = y1 + stats_max[3]
 
     img_b = binary
     img_b[y1:y2, x1:x2] = 0
@@ -119,7 +183,6 @@ def connected_components():
         title = re.sub(r'[\n]', '', title)
         c_numbers_str.append(title)
         i += 1
-
 
     # todo dilate, és akkor egybefolynak a multi-digit számok, aztán centoid, aztán vissze erodate, vagy a binary
 
@@ -159,6 +222,7 @@ def connected_components():
     #    col_str()
 
     # col_str()
+
 
 # def col_str():
 #     global numbers_str, xplus, yplus
@@ -203,54 +267,6 @@ def connected_components():
 #         j += 1
 
 
-def cut_outstandings():
-    global column, row, r_final, c_final
-    j = 0
-    std_c = 100
-    std_r = 100
-    while std_c > 10 or std_r > 10:
-        # print(j, '. iteration')
-
-        sum_c = 0
-        for c in column:
-            sum_c += c[0]
-
-        mean_c = sum_c / len(column)
-
-        c_final = []
-        c_x = []
-        for x in column:
-            c_x.append(x[0])
-        std_c = np.std(c_x)
-
-        for c in column:
-            # print(c, abs(c[0] - mean_c), std_c)
-            if abs(c[0] - mean_c) < std_c or std_c < 5:
-                c_final.append(c)
-        column = c_final
-
-        ########################################
-
-        sum_r = 0
-        for r in row:
-            sum_r += r[1]
-
-        mean_r = sum_r / len(row)
-
-        r_final = []
-        r_y = []
-        for y in row:
-            r_y.append(y[1])
-
-        std_r = np.std(r_y)
-        for r in row:
-            if abs(r[1] - mean_r) < std_r or std_r < 5:
-                r_final.append(r)
-        row = r_final
-
-        j += 1
-
-
 def row_int():
     global numbers_str, xplus, yplus, c_numbers_str, r_numbers_str
     numbers_str = np.concatenate((c_numbers_str, r_numbers_str), axis=0)
@@ -275,8 +291,8 @@ def row_int():
         x2 = c_number[0] + c_number[2] + xplus
         y2 = c_number[1] + c_number[3] + yplus
         cv2.putText(edits.resized, numbers_str[j], (x2 - xplus, y2), cv2.QT_FONT_NORMAL, 1, 0, 2)
-        centoid_x = np.round(c_number[0] + c_number[2]//2)
-        centoid_y = np.round(c_number[1] + c_number[3]//2)
+        centoid_x = np.round(c_number[0] + c_number[2] // 2)
+        centoid_y = np.round(c_number[1] + c_number[3] // 2)
         c_number = np.append(c_number, int(centoid_x))
         c_number = np.append(c_number, int(centoid_y))
         c_number = np.append(c_number, int(numbers_str[j]))
@@ -287,8 +303,8 @@ def row_int():
         x2 = r_number[0] + r_number[2] + xplus
         y2 = r_number[1] + r_number[3] + yplus
         cv2.putText(edits.resized, numbers_str[j], (x2 - xplus, y2), cv2.QT_FONT_NORMAL, 1, 0, 2)
-        centoid_x = np.round(r_number[0] + r_number[2]//2)
-        centoid_y = np.round(r_number[1] + r_number[3]//2)
+        centoid_x = np.round(r_number[0] + r_number[2] // 2)
+        centoid_y = np.round(r_number[1] + r_number[3] // 2)
         r_number = np.append(r_number, int(centoid_x))
         r_number = np.append(r_number, int(centoid_y))
         r_number = np.append(r_number, int(numbers_str[j]))
@@ -299,7 +315,6 @@ def row_int():
 
 
 def detect_title(has_title):
-
     if has_title == 0:
         return None
     elif has_title == 1:
@@ -325,7 +340,7 @@ def bars():
     sum = 0
     for bar in elements:
         sum += bar[5]
-    mean = sum/len(elements)
+    mean = sum / len(elements)
 
 
 def define_orientation():
@@ -366,5 +381,5 @@ def define_orientation():
     width = int(resized.shape[1] / percent)
     height = int(resized.shape[0] / percent)
     resized = cv2.resize(resized, (width, height))
-    cv2.imwrite('rects_'+orientation+'.png', resized)
+    cv2.imwrite('rects_' + orientation + '.png', resized)
     # cv2.imwrite('bars_'+orientation+'.png', bars)

@@ -1,4 +1,4 @@
-\documentclass{article}%
+\documentclass{standalone}%
 \usepackage[T1]{fontenc}%
 \usepackage[utf8]{inputenc}%
 \usepackage{lmodern}%
@@ -13,16 +13,13 @@
 \begin{document}%
 \normalsize%
 \begin{tikzpicture}%
-\begin{axis}[xbar, name=mygraph]%
+\begin{axis}[xbar, , name=mygraph]%
 \addplot coordinates {%
-(4.0,1)%
-(0.96,2)%
-(2.0,3)%
-(2.96,4)%
-(0.96,5)%
-(8.0,6)%
-(6.96,7)%
-(4.96,8)%
+(3.2,1)%
+(0.4,2)%
+(1.35,3)%
+(2.25,4)%
+(5.0,5)%
 };%
 %
 %
