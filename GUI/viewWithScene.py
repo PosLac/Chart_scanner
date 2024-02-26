@@ -11,7 +11,9 @@ class ViewWithScene(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setMinimumSize(800, 800)
+        self.image = None
 
     def set_image(self, pixmap):
+        self.image = pixmap
         self.pixmap_item.setPixmap(pixmap)
         self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)

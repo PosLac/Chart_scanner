@@ -1,6 +1,6 @@
-import image_edits as edits
-import image_detectations as detects
-import to_latex
+from functions import image_detectations as detects
+from functions import to_latex
+from functions import image_edits as edits
 
 
 def main(fname, title_pos):
@@ -12,6 +12,9 @@ def main(fname, title_pos):
     """
     print("Main started")
 
+    # print(f"Contains legend: {legend is not None}")
+    # detects.scan_legend(legend, legend_position)
+
     edits.read_img(fname)
     print("Read done")
 
@@ -19,7 +22,7 @@ def main(fname, title_pos):
     print("Upscale done")
 
     edits.ni_black_threshold()
-    print("Treshold done")
+    print("Threshold done")
 
     edits.threshold()
     print("Binary done")
@@ -30,11 +33,14 @@ def main(fname, title_pos):
     detects.connected_components()
     print("Connected done")
 
-    edits.morphological_transform()
+    edits.elements = edits.morphological_transform(detects.chart_with_bars_img)
     print("Morph done")
+
+    detects.detect_colors(edits.resized_color, edits.elements, edits.bars_with_labels)
 
     detects.bars()
     print("Bars done")
+
 
     detects.define_orientation()
     print("Orientation done")
@@ -45,4 +51,4 @@ def main(fname, title_pos):
     # cv2.destroyAllWindows()
 
 
-# main(fname="chart_ybar.png", title_pos=0)
+# functions(fname="chart_ybar.png", title_pos=0)

@@ -1,8 +1,8 @@
-from PyQt5.QtCore import Qt, pyqtSignal, QPoint
+from PyQt5.QtCore import Qt, pyqtSignal, QPoint, QPointF
 from PyQt5.QtGui import QPen, QBrush
 from PyQt5.QtGui import QPixmap, QPolygonF, QPainterPath, QPainter
 from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsEllipseItem
-from GUI.viewWithScene import ViewWithScene
+from viewWithScene import ViewWithScene
 
 
 class InputImageView(ViewWithScene):
@@ -13,15 +13,18 @@ class InputImageView(ViewWithScene):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.result = None
         self.pen_width = 5
         self.pen = QPen(Qt.green, self.pen_width)
-        self.click_pos = []
+        self.click_pos_array = []
         self.lines = []
         self.circles = []
         self.corner_diameter = 20
+        self.enable_crop = False
 
     def calculate_pen_width(self, width_scale, height_scale):
         self.pen_width = round(5 * max(width_scale, height_scale))
+
         # self.pen_width = 0.007 * min(self.pixmap_item.pixmap().width(), self.pixmap_item.pixmap().height())
         self.pen.setWidth(self.pen_width)
 
@@ -38,29 +41,28 @@ class InputImageView(ViewWithScene):
 
     def mousePressEvent(self, event):
         event_pos = self.pixmap_item.mapFromScene(self.mapToScene(event.pos()))
-        if event.button() == Qt.LeftButton and self.pixmap_item.contains(event_pos):
-
-            self.click_pos.append(event_pos)
+        if self.enable_crop and event.button() == Qt.LeftButton and self.pixmap_item.contains(event_pos):
+            self.click_pos_array.append(event_pos)
             self.draw_corner(event_pos)
 
-            if 1 < len(self.click_pos) < 4:
-                self.draw_line(self.click_pos[-2], event_pos)
+            if 1 < len(self.click_pos_array) < 4:
+                self.draw_line(self.click_pos_array[-2], event_pos)
                 self.draw_corner(event_pos)
 
-            elif len(self.click_pos) == 4:
-                self.draw_line(self.click_pos[-2], event_pos)
-                self.draw_line(self.click_pos[0], event_pos)
+            elif len(self.click_pos_array) == 4:
+                self.draw_line(self.click_pos_array[-2], event_pos)
+                self.draw_line(self.click_pos_array[0], event_pos)
                 self.draw_corner(event_pos)
-                self.crop(self.click_pos)
+                self.crop()
 
-            elif len(self.click_pos) == 5:
+            elif len(self.click_pos_array) == 5:
                 for ln in self.lines:
                     self.scene().removeItem(ln)
                 self.lines = []
                 for c in self.circles[:-1]:
                     self.scene().removeItem(c)
                 self.circles = [self.circles[-1]]
-                self.click_pos = [event_pos]
+                self.click_pos_array = [event_pos]
 
         super().mousePressEvent(event)
 
@@ -79,9 +81,9 @@ class InputImageView(ViewWithScene):
         self.scene().addItem(corner)
         self.circles.append(corner)
 
-    def crop(self, click_pos):
+    def crop(self):
         painter_path = QPainterPath()
-        painter_path.addPolygon(QPolygonF(click_pos))
+        painter_path.addPolygon(QPolygonF(self.click_pos_array))
         source = self.pixmap_item.pixmap()
         r = painter_path.boundingRect().toRect().intersected(source.rect())
 
@@ -92,13 +94,13 @@ class InputImageView(ViewWithScene):
         painter.setClipPath(painter_path)
         painter.drawPixmap(QPoint(), source, source.rect())
         painter.end()
-        result = pixmap.copy(r)
-        self.cropped.emit(result)
+        self.result = pixmap.copy(r)
+        self.cropped.emit(self.result)
 
     def clear_scene(self):
         if len(self.scene().items()) > 1:
             self.scene().clear()
             self.pixmap_item = self.scene().addPixmap(QPixmap())
-            self.click_pos.clear()
+            self.click_pos_array.clear()
             self.lines.clear()
             self.circles.clear()

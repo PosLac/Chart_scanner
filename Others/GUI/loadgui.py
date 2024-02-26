@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QFileDialog, QMainWindow, QPushButton, QLabel, QAppl
 class UI(QMainWindow):
     def __init__(self):
         super(UI, self).__init__()
-        uic.loadUi("MainWindow.ui", self)
+        uic.loadUi("mainWindow.ui", self)
         self.button = self.findChild(QPushButton, "openFiles")
         self.label = self.findChild(QLabel, "fileName")
         self.chart = self.findChild(QLabel, "chart")

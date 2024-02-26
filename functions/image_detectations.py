@@ -2,7 +2,12 @@ import re
 import cv2
 import numpy as np
 import pytesseract
-import main.image_edits as edits
+from pytesseract import Output
+
+import functions.image_edits as edits
+from matplotlib import pyplot as plt
+
+import functions.detect_legend as legend_detections
 
 pytesseract.pytesseract.tesseract_cmd = 'D:/Apps/Tesseract/tesseract.exe'
 # single_digit = r'--oem 3 --psm 10 -c tessedit_char_whitelist=0123456789'
@@ -18,8 +23,9 @@ c_new_numbers = []
 r_new_numbers = []
 col_nums = []
 row_nums = []
-resized = None
+resized_gray = None
 binary = None
+legend_orig = None
 
 
 # Fill two arrays with values from each x and y coordinate axes
@@ -27,9 +33,9 @@ def isolate_x_y() -> None:
     """
 
     """
-    global resized, binary, col_nums, row_nums, number_of_components, labels, stats, centoids
+    global resized_gray, binary, col_nums, row_nums, number_of_components, labels, stats, centoids
 
-    resized = edits.resized
+    resized = edits.resized_gray
     binary = edits.threshold()
 
     # number_of_components = background included
@@ -103,7 +109,7 @@ def cut_outstandings():
 
 
 def connected_components():
-    global binary, num_size, percent, resized, chart_with_bars_img, numbers, centoids, stats, max_y, new_numbers, \
+    global binary, num_size, percent, resized_gray, chart_with_bars_img, numbers, centoids, stats, max_y, new_numbers, \
         chart_title, r_numbers, c_numbers, elements, numbers_str, xplus, yplus, col_nums, row_nums, \
         r_final, c_final, c_numbers_str, r_numbers_str, labels
 
@@ -138,7 +144,7 @@ def connected_components():
             res.append(row_num)
             start = (row_num[0], row_num[1])
             end = (row_num[0] + row_num[2], row_num[1] + row_num[3])
-            cv2.rectangle(edits.resized, start, end, 0, 2)
+            cv2.rectangle(edits.resized_gray, start, end, 0, 2)
 
     for col_num in c_final:
         if col_num[2] * col_num[3] <= res_max:
@@ -146,7 +152,7 @@ def connected_components():
             res.append(col_num)
             start = (col_num[0], col_num[1])
             end = (col_num[0] + col_num[2], col_num[1] + col_num[3])
-            cv2.rectangle(edits.resized, start, end, 0, 3)
+            cv2.rectangle(edits.resized_gray, start, end, 0, 3)
 
     numbers_str = []
     i = 0
@@ -167,7 +173,6 @@ def connected_components():
 
     img_b = binary
     img_b[y1:y2, x1:x2] = 0
-    cv2.waitKey(0)
 
     for number in c_final:
         x1 = number[0] - xplus
@@ -202,7 +207,7 @@ def connected_components():
         # cv2.imshow(str(title)+': '+str(i)+'.', img_re)
         # cv2.imwrite(str(numbers_int) + ': ' + str(i)+'.png', img_re)
         i += 1
-    cv2.waitKey(0)
+
     # print('r_numbers_str: ', r_numbers_str)
     row_type = None
     row_type = 'str'
@@ -290,7 +295,7 @@ def row_int():
     for c_number in c_numbers:
         x2 = c_number[0] + c_number[2] + xplus
         y2 = c_number[1] + c_number[3] + yplus
-        cv2.putText(edits.resized, numbers_str[j], (x2 - xplus, y2), cv2.QT_FONT_NORMAL, 1, 0, 2)
+        cv2.putText(edits.resized_gray, numbers_str[j], (x2 - xplus, y2), cv2.QT_FONT_NORMAL, 1, 0, 2)
         centoid_x = np.round(c_number[0] + c_number[2] // 2)
         centoid_y = np.round(c_number[1] + c_number[3] // 2)
         c_number = np.append(c_number, int(centoid_x))
@@ -302,7 +307,7 @@ def row_int():
     for r_number in r_numbers:
         x2 = r_number[0] + r_number[2] + xplus
         y2 = r_number[1] + r_number[3] + yplus
-        cv2.putText(edits.resized, numbers_str[j], (x2 - xplus, y2), cv2.QT_FONT_NORMAL, 1, 0, 2)
+        cv2.putText(edits.resized_gray, numbers_str[j], (x2 - xplus, y2), cv2.QT_FONT_NORMAL, 1, 0, 2)
         centoid_x = np.round(r_number[0] + r_number[2] // 2)
         centoid_y = np.round(r_number[1] + r_number[3] // 2)
         r_number = np.append(r_number, int(centoid_x))
@@ -344,8 +349,8 @@ def bars():
 
 
 def define_orientation():
-    global elements, bar_hs, bars, ratios, numbers, orientation, resized, r_numbers, c_numbers, mean
-    resized = edits.resized
+    global elements, bar_hs, bars, ratios, numbers, orientation, resized_gray, r_numbers, c_numbers, mean
+    resized = edits.resized_gray
     elements = edits.elements
     bar_hs = []
     # Legnagyobb oszlop, orientáció
@@ -383,3 +388,147 @@ def define_orientation():
     resized = cv2.resize(resized, (width, height))
     cv2.imwrite('rects_' + orientation + '.png', resized)
     # cv2.imwrite('bars_'+orientation+'.png', bars)
+
+
+def detect_colors(img, bar_stats, bars_labels):
+    bars_with_colors = []
+    # bars_stats = edits.elements
+    bars_stats_without_legend = []
+
+    # bars_labels = edits.bars_with_labels
+    bars_img = np.ndarray(img.shape)
+    # print(f"bar_stats: {bar_stats}")
+    for i in range(len(bar_stats)):
+        bars_img.fill(0)
+        color_rgb = detect_bar_color(img, bar_stats, bars_labels, i + 1)
+        bars_with_colors.append([bar_stats[i], np.array(color_rgb)])
+        # print(f"{i}. (stats: {bar_stats[i]}) \t (color: {color_rgb})")
+        bars_img[bars_labels == i + 1] = 255
+    return bars_with_colors
+
+
+# TODO kivenni jelmagyarázatban lévő barokat (jelmagyarázat egérrel kijelölni)
+def detect_bar_color(resized_color, bars_stats, bars_labels, label):
+    # bars_stats = edits.elements
+    # resized_color = edits.resized_color.copy()
+
+    bar_with_color = np.ndarray(resized_color.shape, np.uint8)
+    bar_with_color.fill(0)
+
+    bar_with_color[bars_labels == label] = resized_color[bars_labels == label]
+    # edits.imshow_resized(f"{label}. bar_with_color", bar_with_color, 0.5)
+    index = label - 1
+    start_x = bars_stats[index][0]
+    end_x = start_x + bars_stats[index][2]
+
+    start_y = bars_stats[index][1]
+    end_y = start_y + bars_stats[index][3]
+
+    bar_with_color_cropped = bar_with_color[start_y:end_y, start_x:end_x]
+
+    image_rgb = bar_with_color_cropped
+    pixels = image_rgb.reshape(-1, 3)
+    unique_colors, counts = np.unique(pixels, axis=0, return_counts=True)
+    unique_colors_with_counts = np.array(np.column_stack((unique_colors, counts)), np.uint8)
+    unique_colors_with_counts = sorted(unique_colors_with_counts, key=lambda x: x[3], reverse=True)
+
+    dominant_color_with_counts = unique_colors_with_counts[0]
+    dominant_color = dominant_color_with_counts[:3]
+
+    threshold = 100
+
+    for i in range(1, len(unique_colors_with_counts)):
+        vector_a = unique_colors_with_counts[i][:3]
+
+        dist = np.array(np.linalg.norm(vector_a - dominant_color), np.uint8)
+
+        ratio = round(
+            unique_colors_with_counts[i][3] / (bar_with_color_cropped.shape[0] * bar_with_color_cropped.shape[1]), 3)
+
+        # at least the 50% of the bar has to be in the dominant color
+        if dist <= threshold and ratio >= 0.5:
+            dominant_color = np.array(np.average([dominant_color, vector_a], axis=0))[::-1]
+            print(f"\nnew dominant color: {dominant_color}")
+            # TODO check if works for 50% color
+
+    return dominant_color  # BGR -> RGB
+
+
+def scan_legend(legend, legend_position):
+    global legend_orig
+
+    if legend is not None:
+        print(f"legend_position: {legend_position}")
+        legend_orig = legend.copy()
+        bar_stats_with_colors = legend_detections.detect_legend_bars(legend)
+        colors = merge_colors(bar_stats_with_colors)
+
+        bars_max_x = 0
+
+        for key, values in colors.items():
+            bars_max_x = max(values["x"] + values["w"], bars_max_x)
+
+        # print(bars_max_x)
+
+        for key, values in colors.items():
+            x = values["x"]
+            y = values["y"]
+            w = values["w"]
+            h = values["h"]
+
+            cv2.rectangle(legend_orig, (x, y), (x + w, y + h), (0, 0, 255), 2)
+            cv2.imshow("legend_orig", legend_orig)
+
+        cv2.line(legend_orig, (bars_max_x, 0), (bars_max_x, legend_orig.shape[1]), (255, 0, 0), 2)
+        cv2.imshow("legend_orig", legend_orig)
+
+        texts = legend_detections.detect_legend_texts(bars_max_x)
+        bars_with_texts = legend_detections.merge_bars_with_texts(colors, texts)
+
+
+def merge_colors(bar_stats_with_colors):
+    print(f"bar_stats_with_colors: {bar_stats_with_colors}")
+    grouped_colors = {}
+    threshold = 30
+    similar_color_key = None
+
+    for i, [pos, color] in enumerate(bar_stats_with_colors):
+        # print(i)
+        # print(f"{i}. pos: {pos}, color: {color}")
+        for key, values in grouped_colors.items():
+            norm = int(np.linalg.norm(np.concatenate(cv2.subtract(values['color'], color, 1))))
+            similar_color_key = key if norm <= threshold else None
+            # print(f"norm: {values['color']} - {color} = {norm}, {key}")
+
+        x = pos[0]
+        y = pos[1]
+        w = pos[2]
+        h = pos[3]
+
+        if similar_color_key is not None:
+            min_x = min(grouped_colors[similar_color_key]["x"], x)
+            min_y = min(grouped_colors[similar_color_key]["y"], y)
+            max_w = max(grouped_colors[similar_color_key]["x"] + grouped_colors[similar_color_key]["w"], x + w) - min_x
+            max_h = max(grouped_colors[similar_color_key]["y"] + grouped_colors[similar_color_key]["h"], y + h) - min_y
+
+            grouped_colors[similar_color_key]["x"] = min_x
+            grouped_colors[similar_color_key]["y"] = min_y
+            grouped_colors[similar_color_key]["w"] = max_w
+            grouped_colors[similar_color_key]["h"] = max_h
+
+            average = np.array(np.average([grouped_colors[similar_color_key]['color'], color], axis=0), np.uint8)
+            # print(f"{grouped_colors[similar_color_key]['color']} and {color} = {average}")
+            grouped_colors[similar_color_key]["color"] = average
+
+        else:
+            grouped_colors[i] = {
+                "color": color,
+                "x": x,
+                "y": y,
+                "w": w,
+                "h": h
+            }
+
+    print("\ngrouped_colors: {\n" + "\n".join("{!r}: {!r}".format(key, values) for key, values in grouped_colors.items()) + "}")
+
+    return grouped_colors

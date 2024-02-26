@@ -3,7 +3,7 @@ import numpy as np
 from pylatex import (Document, TikZ, TikZNode,
                      TikZOptions,
                      Axis, Plot, Command)
-import main.image_detectations as detects
+import functions.image_detectations as detects
 
 
 def to_latex():
