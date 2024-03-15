@@ -3,7 +3,7 @@ from functions import to_latex
 from functions import image_edits as edits
 
 
-def main(fname, title_pos):
+def main(fname, title_pos, grouped, bars_with_texts=None, legend_position=None):
     """
 
     Args:
@@ -41,11 +41,14 @@ def main(fname, title_pos):
     detects.bars()
     print("Bars done")
 
-
     detects.define_orientation()
     print("Orientation done")
 
-    to_latex.latex(False, detects.orientation, detects.ratios, title_pos=title_pos)
+    # to_latex.latex(False, detects.orientation, detects.ratios, title_pos=title_pos)
+    # to_latex.prepare_data_for_generation(False, detects.orientation, grouped, detects.ratios, bars_with_texts, legend_position) # todo
+    ratios = [[0, 0.75, 0.5, 0.25], [0.25, 1, 0.25, 0.5]]
+
+    to_latex.prepare_data_for_generation(False, "xbar", grouped, ratios, bars_with_texts, legend_position) # todo
     print("Main completed")
     # todo destroyallwindow
     # cv2.destroyAllWindows()

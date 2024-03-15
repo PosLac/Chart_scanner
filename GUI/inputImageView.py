@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, pyqtSignal, QPoint, QPointF
+from PyQt5.QtCore import Qt, pyqtSignal, QPoint
 from PyQt5.QtGui import QPen, QBrush
 from PyQt5.QtGui import QPixmap, QPolygonF, QPainterPath, QPainter
 from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsEllipseItem

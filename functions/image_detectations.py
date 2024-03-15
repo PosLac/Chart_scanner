@@ -1,13 +1,11 @@
 import re
+
 import cv2
 import numpy as np
 import pytesseract
-from pytesseract import Output
-
-import functions.image_edits as edits
-from matplotlib import pyplot as plt
 
 import functions.detect_legend as legend_detections
+import functions.image_edits as edits
 
 pytesseract.pytesseract.tesseract_cmd = 'D:/Apps/Tesseract/tesseract.exe'
 # single_digit = r'--oem 3 --psm 10 -c tessedit_char_whitelist=0123456789'
@@ -454,11 +452,10 @@ def detect_bar_color(resized_color, bars_stats, bars_labels, label):
     return dominant_color  # BGR -> RGB
 
 
-def scan_legend(legend, legend_position):
+def scan_legend(legend):
     global legend_orig
 
     if legend is not None:
-        print(f"legend_position: {legend_position}")
         legend_orig = legend.copy()
         bar_stats_with_colors = legend_detections.detect_legend_bars(legend)
         colors = merge_colors(bar_stats_with_colors)
@@ -484,6 +481,7 @@ def scan_legend(legend, legend_position):
 
         texts = legend_detections.detect_legend_texts(bars_max_x)
         bars_with_texts = legend_detections.merge_bars_with_texts(colors, texts)
+        return bars_with_texts
 
 
 def merge_colors(bar_stats_with_colors):
@@ -521,7 +519,7 @@ def merge_colors(bar_stats_with_colors):
             grouped_colors[similar_color_key]["color"] = average
 
         else:
-            grouped_colors[i] = {
+            grouped_colors[len(grouped_colors)] = {
                 "color": color,
                 "x": x,
                 "y": y,
@@ -529,6 +527,7 @@ def merge_colors(bar_stats_with_colors):
                 "h": h
             }
 
-    print("\ngrouped_colors: {\n" + "\n".join("{!r}: {!r}".format(key, values) for key, values in grouped_colors.items()) + "}")
+    print("\ngrouped_colors: {\n" + "\n".join(
+        "{!r}: {!r}".format(key, values) for key, values in grouped_colors.items()) + "}")
 
     return grouped_colors

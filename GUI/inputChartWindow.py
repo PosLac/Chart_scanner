@@ -1,11 +1,13 @@
 import sys
+
+import cv2
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QPixmap, QImageReader
 from PyQt5.QtWidgets import QFileDialog, QMainWindow, QPushButton, QLabel, QApplication, QGridLayout
 
+from inputImageViewMouseDrag import InputImageViewMouseDrag
 from mainWindow import MainWindow
-from inputImageView import InputImageView
 from viewWithScene import ViewWithScene
 
 
@@ -21,11 +23,11 @@ class InputChartWindow(QMainWindow):
 
         # left_grid_layout
         self.left_grid_layout = self.findChild(QGridLayout, "left_grid_layout")
-        self.input_image_view = self.findChild(InputImageView, "input_image_view")
-        self.input_image_view.enable_crop = True
+        self.input_image_view = self.findChild(InputImageViewMouseDrag, "input_image_view")
         self.input_image_view.setScene(self.input_image_view.scene())
-        self.input_image_view.cropped.connect(lambda: self.jump_to_scan_button.setHidden(False)) #todo false -> not előző állapot
-        self.left_grid_layout.addWidget(self.input_image_view, 1, 0)
+        self.input_image_view.cropped.connect(
+            lambda: self.jump_to_scan_button.setHidden(False))  # todo false -> not előző állapot
+        self.left_grid_layout.addWidget(self.input_image_view, 1, 0, alignment=Qt.AlignHCenter)
         self.file_name_label = self.findChild(QLabel, "file_name")
         self.open_files_button = self.findChild(QPushButton, "open_files")
         self.open_files_button.clicked.connect(self.open_file)
@@ -35,9 +37,9 @@ class InputChartWindow(QMainWindow):
         self.output_image_view = self.findChild(ViewWithScene, "cropped_chart_view")
         self.output_image_view.setScene(self.output_image_view.scene())
         self.input_image_view.cropped.connect(self.output_image_view.set_image)
-        self.right_grid_layout.addWidget(self.output_image_view, 1, 0)
+        self.right_grid_layout.addWidget(self.output_image_view, 1, 0, alignment=Qt.AlignHCenter)
         self.jump_to_scan_button = self.findChild(QPushButton, "jump_to_scan")
-        self.jump_to_scan_button.clicked.connect(self.scan_chart)
+        self.jump_to_scan_button.clicked.connect(self.jump_to_main_window)
         self.jump_to_scan_button.setHidden(True)
         self.load_without_crop_button = self.findChild(QPushButton, "load_without_crop")
         self.load_without_crop_button.clicked.connect(self.set_chart_to_view)
@@ -56,23 +58,26 @@ class InputChartWindow(QMainWindow):
 
         if self.file_name:
             self.file_name_label.setText(self.file_name.split('/')[-1])
+            self.input_image_view.enable_crop = True
             self.input_image_view.clear_scene()
             self.chart = QPixmap(self.file_name)
-            # input_chart = input_chart.scaledToWidth(700)
+            # self.chart = self.chart.scaledToWidth(700)
             self.input_image_view.set_image(self.chart)
-            self.input_image_view.calculate_scales()
+            self.input_image_view.file_name = self.file_name
             self.load_without_crop_button.setHidden(False)
+            self.right_grid_layout.setRowStretch(2, 0)
+            self.right_grid_layout.setRowStretch(3, 0)
 
-    def scan_chart(self):
+    def jump_to_main_window(self):
         self.close()
         self.main_window = MainWindow(self)
         if self.output_image_view.image:
             self.main_window.input_image_view.set_image(self.output_image_view.image)
-            self.main_window.input_image_view.calculate_scales()
 
     def set_chart_to_view(self):
         self.output_image_view.set_image(self.chart)
         self.jump_to_scan_button.setHidden(False)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

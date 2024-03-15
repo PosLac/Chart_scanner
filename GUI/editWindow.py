@@ -36,7 +36,7 @@ class EditWindow(QMainWindow):
 
         self.title_str = ""
         self.title.setText(detects.chart_title)
-        input_chart = QPixmap("../tikzdraw.png")
+        input_chart = QPixmap("tikzdraw.png")
         input_chart = input_chart.scaledToWidth(700)
         self.loaded_chart.setPixmap(input_chart)
 

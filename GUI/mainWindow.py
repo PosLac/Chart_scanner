@@ -4,20 +4,21 @@ import sys
 import cv2
 import numpy as np
 from PyQt5 import uic
+from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtCore import QThread
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QMovie, QPixmap, QImage
+from PyQt5.QtGui import QMovie, QPixmap
 from PyQt5.QtWidgets import QFileDialog, QMainWindow, QPushButton, QLabel, QApplication, QRadioButton, QGroupBox, \
     QGridLayout, QCheckBox
 
-from inputImageView import InputImageView
+from inputImageViewMouseDrag import InputImageViewMouseDrag
 from functions import worker
 from viewWithScene import ViewWithScene
 from editWindow import EditWindow
 
 
 class MainWindow(QMainWindow):
-    work_requested = pyqtSignal(str, bool, object, list)
+    work_requested = pyqtSignal(str, bool, object, object)
 
     def __init__(self, parent_window):
         super(MainWindow, self).__init__()
@@ -30,7 +31,8 @@ class MainWindow(QMainWindow):
         self.back_button = self.findChild(QPushButton, "back_button")
         self.file_name_label = self.findChild(QLabel, "file_name")
         self.file_name_label.setText(parent_window.file_name_label.text())
-        self.input_image_view = self.findChild(InputImageView, "input_image_view")
+        self.input_image_view = self.findChild(InputImageViewMouseDrag, "input_image_view")
+        # self.input_image_view = self.findChild(InputImageView, "input_image_view")
         self.input_image_view.setScene(self.input_image_view.scene())
         self.back_button.clicked.connect(self.back_to_input_window)
 
@@ -60,7 +62,7 @@ class MainWindow(QMainWindow):
         self.output_image_view.setScene(self.output_image_view.scene())
         self.input_image_view.cropped.connect(self.output_image_view.set_image)
         self.input_image_view.cropped.connect(self.legend_has_cropped)
-        self.output_layout.addWidget(self.output_image_view, 1, 0)
+        self.output_layout.addWidget(self.output_image_view, 1, 0, alignment=Qt.AlignHCenter)
 
         self.crop_image_button = self.findChild(QPushButton, "crop_image")
         self.scanButton = self.findChild(QPushButton, "scan")
@@ -69,7 +71,7 @@ class MainWindow(QMainWindow):
         self.export_button_pdf = self.findChild(QPushButton, "export_button_pdf")
         self.export_button_png = self.findChild(QPushButton, "export_button_png")
         self.edit_button = self.findChild(QPushButton, "edit_button")
-        self.spinner = QMovie("Spin-1s-200px.gif")
+        self.spinner = QMovie("Others/Spin-1s-200px.gif")
         self.export_button_pdf.clicked.connect(lambda: self.export("pdf"))
         self.export_button_png.clicked.connect(lambda: self.export("png"))
         self.edit_button.clicked.connect(self.open_edit_window)
@@ -117,8 +119,22 @@ class MainWindow(QMainWindow):
         if contains:
             self.read_legend_button.setHidden(False)
 
-    def set_legend_data(self):
-        self.output_image_view.set_image(self.input_image_view.result)
+    # def set_legend_data(self):
+    #     self.output_image_view.set_image(self.input_image_view.result)
+    #
+    # def scan_legend_for_clicks(self):
+    #     legend_image = self.output_image_view.image.toImage()
+    #     ptr = legend_image.bits()
+    #     ptr.setsize(legend_image.byteCount())
+    #     legend_image_np = np.frombuffer(ptr, np.uint8).reshape(legend_image.height(), legend_image.width(), 4)
+    #
+    #     # change color to white where alpha channel is 0
+    #     legend_image_np[legend_image_np[:, :, 3] == 0] = [255, 255, 255, 255]
+    #     legend_image_bgr = cv2.cvtColor(legend_image_np, cv2.COLOR_BGRA2BGR)
+    #
+    #     # cv2.imshow("legend_image_bgr", legend_image_bgr)
+    #     legend_position = self.input_image_view.click_pos_array
+    #     self.work_requested.emit(self.parent_window.file_name, False, legend_image_bgr, legend_position)
 
     def scan_legend(self):
         legend_image = self.output_image_view.image.toImage()
@@ -131,12 +147,12 @@ class MainWindow(QMainWindow):
         legend_image_bgr = cv2.cvtColor(legend_image_np, cv2.COLOR_BGRA2BGR)
 
         # cv2.imshow("legend_image_bgr", legend_image_bgr)
-        legend_position = self.input_image_view.click_pos_array
+        legend_position = self.input_image_view.cropped_pos
+        print(f"legend_position: {legend_position}")
+
         self.work_requested.emit(self.parent_window.file_name, False, legend_image_bgr, legend_position)
 
     def scan_chart(self):
-        global fname
-        fname = self.parent_window.file_name
         if self.above.isChecked():
             self.title_pos = 1
         elif self.below.isChecked():
@@ -144,8 +160,8 @@ class MainWindow(QMainWindow):
         elif self.no_title.isChecked():
             self.title_pos = 0
 
-        print("fname", fname)
-        self.work_requested.emit(fname, False, None, [])
+        print("fname", self.parent_window.file_name)
+        self.work_requested.emit(self.parent_window.file_name, False, None, None)
         self.spinner.start()
 
     def export(self, type):

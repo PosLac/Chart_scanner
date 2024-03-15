@@ -5,6 +5,13 @@ from pytesseract import Output
 import functions.image_detectations as detects
 
 
+def detect_legend_bars(legend):
+    bars_stats, bars_with_labels = morph_transform_for_legend(legend)
+    bars_with_colors = detects.detect_colors(legend, bars_stats, bars_with_labels)
+
+    return bars_with_colors
+
+
 def morph_transform_for_legend(img):
     legend_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     legend_binary = np.uint8(np.ndarray(legend_gray.shape))
@@ -29,13 +36,6 @@ def morph_transform_for_legend(img):
     stats = np.delete(stats, 0, 0)
 
     return stats, labels
-
-
-def detect_legend_bars(legend):
-    bars_stats, bars_with_labels = morph_transform_for_legend(legend)
-    bars_with_colors = detects.detect_colors(legend, bars_stats, bars_with_labels)
-
-    return bars_with_colors
 
 
 def detect_legend_texts(bars_max_x):
@@ -115,7 +115,7 @@ def detect_legend_texts(bars_max_x):
         h = values["h"]
 
         cv2.rectangle(legend_orig, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.putText(legend_orig, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        cv2.putText(legend_orig, text, (x, y + h + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
         cv2.imshow("legend_orig", legend_orig)
 
     return merged_texts
@@ -142,6 +142,7 @@ def merge_bars_with_texts(bars, texts):
                     "text": t_values["text"]
                 }
 
-    print("\nbars_with_texts: {\n" + "\n".join("{!r}: {!r}".format(key, values) for key, values in bars_with_texts.items()) + "}")
+    print("\nbars_with_texts: {\n" + "\n".join(
+        "{!r}: {!r}".format(key, values) for key, values in bars_with_texts.items()) + "}")
 
     return bars_with_texts

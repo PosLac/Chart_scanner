@@ -161,7 +161,7 @@ def morphological_transform(img) -> np.ndarray:
     bars_p.fill(0)
     bars_p[bars > 0] = 255
     bars = np.uint8(bars_p)
-    imshow_resized("bars2", bars, 0.5)
+    # imshow_resized("bars2", bars, 0.5)
     # cv2.imwrite('bars1.png', bars)
 
     _, bars_with_labels, stats, _ = cv2.connectedComponentsWithStats(bars, None, 8)
