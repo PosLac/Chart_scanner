@@ -82,7 +82,7 @@ class InputImageViewMouseDrag(ViewWithScene):
             h = int(w / self.aspect_ratio)
             self.resize_ratio = round(pixmap.width() / w, 4)
 
-        print(f"View resized from {pixmap.width()}x{pixmap.height()} to {w}x{h}, aspect_ratio: {self.aspect_ratio}, resize_ratio {self.resize_ratio}")
+        print(f"InputImageView resized from {pixmap.width()}x{pixmap.height()} to {w}x{h}, aspect_ratio: {self.aspect_ratio}, resize_ratio {self.resize_ratio}")
         self.setFixedSize(w, h)
         self.image = pixmap
         self.pixmap_item.setPixmap(pixmap)

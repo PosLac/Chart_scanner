@@ -17,23 +17,25 @@ class EditWindow(QMainWindow):
         uic.loadUi("editWindow.ui", self)
 
         # variables
-        self.parent_window = parent_window
-        self.title_str = ""
-        self.title_pos = 0
+        self.input_chart = QPixmap("tikzdraw.png")
+        self.input_chart = self.input_chart.scaledToWidth(700)
         self.legend_position = None
         self.legend_image_bgr = None
         self.minMax_array = None
-        self.input_chart = QPixmap("tikzdraw.png")
-        self.input_chart = self.input_chart.scaledToWidth(700)
-        self.update_bool = False
         self.orientation = detects.orientation
+        self.parent_window = parent_window
         self.ratios = detects.ratios
         self.spinner = QMovie("Spin-1s-200px.gif")
         self.simple_chart_bar_color = detects.simple_chart_bar_color  #todo beállítani alap színt
+        self.title_str = ""
+        self.title_pos = 0
+        self.update_bool = False
 
-        # edit_layout
+        # color_layout
         self.color_picker_button = self.findChild(QPushButton, "color_picker_button")
         self.color_picker_button.clicked.connect(self.open_color_picker)
+        self.color_label = self.findChild(QLabel, "color_label")
+        self.color_label.setStyleSheet(f"background: rgb({', '.join(map(str, self.simple_chart_bar_color))})")
 
         # title_layout
         self.above = self.findChild(QRadioButton, "above")
@@ -95,6 +97,7 @@ class EditWindow(QMainWindow):
         if color.isValid():
             print(f"hexa: {color.name()}, rgb: {color.getRgb()}, {color.getRgb()[:3]}")
             self.simple_chart_bar_color = color.getRgb()[:3]
+            self.color_label.setStyleSheet(f"background: rgb({', '.join(map(str, self.simple_chart_bar_color))})")
 
     def workerStarted(self, name, legend, legend_position):
         print("editWindow worker started")
