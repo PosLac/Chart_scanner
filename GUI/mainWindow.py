@@ -18,10 +18,11 @@ from editWindow import EditWindow
 
 
 class MainWindow(QMainWindow):
-    work_requested = pyqtSignal(str, bool, object, object)
+    main_work_requested = pyqtSignal(str, object, object)
 
     def __init__(self, parent_window):
         super(MainWindow, self).__init__()
+        self.legend_image_bgr = None
         self.parent_window = parent_window
 
         uic.loadUi("mainWindow.ui", self)
@@ -83,7 +84,7 @@ class MainWindow(QMainWindow):
         self.worker.fname.connect(self.update)
         # self.worker.completed.connect(self.worker_thread.exit)
         self.worker.completed.connect(self.workerCompleted)
-        self.work_requested.connect(self.workerStarted)
+        self.main_work_requested.connect(self.workerStarted)
         self.worker.moveToThread(self.worker_thread)
         self.worker_thread.start()
 
@@ -93,9 +94,9 @@ class MainWindow(QMainWindow):
 
         self.showMaximized()
 
-    def workerStarted(self, str, bool, legend, legend_position):
+    def workerStarted(self, str, legend, legend_position):
         print("mainWindow worker started")
-        self.worker.do_work(str, bool, legend, legend_position)
+        self.worker.create_chart(str, legend, legend_position)
 
     def workerCompleted(self):
         print("mainWindow worker completed")
@@ -144,13 +145,13 @@ class MainWindow(QMainWindow):
 
         # change color to white where alpha channel is 0
         legend_image_np[legend_image_np[:, :, 3] == 0] = [255, 255, 255, 255]
-        legend_image_bgr = cv2.cvtColor(legend_image_np, cv2.COLOR_BGRA2BGR)
+        self.legend_image_bgr = cv2.cvtColor(legend_image_np, cv2.COLOR_BGRA2BGR)
 
         # cv2.imshow("legend_image_bgr", legend_image_bgr)
         legend_position = self.input_image_view.cropped_pos
         print(f"legend_position: {legend_position}")
 
-        self.work_requested.emit(self.parent_window.file_name, False, legend_image_bgr, legend_position)
+        self.main_work_requested.emit(self.parent_window.file_name, self.legend_image_bgr, legend_position)
 
     def scan_chart(self):
         if self.above.isChecked():
@@ -161,7 +162,7 @@ class MainWindow(QMainWindow):
             self.title_pos = 0
 
         print("fname", self.parent_window.file_name)
-        self.work_requested.emit(self.parent_window.file_name, False, None, None)
+        self.main_work_requested.emit(self.parent_window.file_name, None, None)
         self.spinner.start()
 
     def export(self, type):
@@ -172,8 +173,11 @@ class MainWindow(QMainWindow):
         print("copy done")
 
     def open_edit_window(self):
-        self.close()
         self.edit_window = EditWindow(self)
+        self.edit_window.legend_image_bgr = self.legend_image_bgr
+        self.edit_window.legend_position = self.input_image_view.cropped_pos
+        self.close()
+        self.edit_window.showMaximized()
 
     def back_to_input_window(self):
         self.close()

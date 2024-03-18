@@ -24,7 +24,8 @@ row_nums = []
 resized_gray = None
 binary = None
 legend_orig = None
-
+bars_with_data = None
+simple_chart_bar_color = None
 
 # Fill two arrays with values from each x and y coordinate axes
 def isolate_x_y() -> None:
@@ -327,6 +328,7 @@ def detect_title(has_title):
 
     title_img = 255 - title_img
     chart_title = pytesseract.pytesseract.image_to_string(title_img, config=config_title)
+    print(f"title: {chart_title}")
     return chart_title
 
 
@@ -389,6 +391,16 @@ def define_orientation():
 
 
 def detect_colors(img, bar_stats, bars_labels):
+    """
+    Detects dominant colors of bars
+    Args:
+        img:
+        bar_stats:
+        bars_labels:
+
+    Returns:
+
+    """
     bars_with_colors = []
     # bars_stats = edits.elements
     bars_stats_without_legend = []
@@ -407,12 +419,22 @@ def detect_colors(img, bar_stats, bars_labels):
 
 # TODO kivenni jelmagyarázatban lévő barokat (jelmagyarázat egérrel kijelölni)
 def detect_bar_color(resized_color, bars_stats, bars_labels, label):
+    """
+    Detects the dominant color of a bar
+    Args:
+        resized_color:
+        bars_stats:
+        bars_labels:
+        label:
+
+    Returns:
+
+    """
     # bars_stats = edits.elements
     # resized_color = edits.resized_color.copy()
 
     bar_with_color = np.ndarray(resized_color.shape, np.uint8)
     bar_with_color.fill(0)
-
     bar_with_color[bars_labels == label] = resized_color[bars_labels == label]
     # edits.imshow_resized(f"{label}. bar_with_color", bar_with_color, 0.5)
     index = label - 1
@@ -427,16 +449,15 @@ def detect_bar_color(resized_color, bars_stats, bars_labels, label):
     image_rgb = bar_with_color_cropped
     pixels = image_rgb.reshape(-1, 3)
     unique_colors, counts = np.unique(pixels, axis=0, return_counts=True)
-    unique_colors_with_counts = np.array(np.column_stack((unique_colors, counts)), np.uint8)
+    unique_colors_with_counts = np.array(np.column_stack((unique_colors, counts)), np.uint32)
     unique_colors_with_counts = sorted(unique_colors_with_counts, key=lambda x: x[3], reverse=True)
 
-    dominant_color_with_counts = unique_colors_with_counts[0]
-    dominant_color = dominant_color_with_counts[:3]
+    dominant_color = unique_colors_with_counts[0][:3].astype(np.uint8)[::-1]
 
     threshold = 100
 
     for i in range(1, len(unique_colors_with_counts)):
-        vector_a = unique_colors_with_counts[i][:3]
+        vector_a = unique_colors_with_counts[i][:3].astype(np.uint8)
 
         dist = np.array(np.linalg.norm(vector_a - dominant_color), np.uint8)
 
@@ -445,11 +466,11 @@ def detect_bar_color(resized_color, bars_stats, bars_labels, label):
 
         # at least the 50% of the bar has to be in the dominant color
         if dist <= threshold and ratio >= 0.5:
-            dominant_color = np.array(np.average([dominant_color, vector_a], axis=0))[::-1]
+            dominant_color = np.array(np.average([dominant_color, vector_a], axis=0))[::-1] # BGR -> RGB
             print(f"\nnew dominant color: {dominant_color}")
             # TODO check if works for 50% color
 
-    return dominant_color  # BGR -> RGB
+    return dominant_color
 
 
 def scan_legend(legend):
@@ -485,15 +506,16 @@ def scan_legend(legend):
 
 
 def merge_colors(bar_stats_with_colors):
+    global simple_chart_bar_color
+
     print(f"bar_stats_with_colors: {bar_stats_with_colors}")
-    grouped_colors = {}
+    grouped_bgr_colors = {}
     threshold = 30
     similar_color_key = None
 
     for i, [pos, color] in enumerate(bar_stats_with_colors):
-        # print(i)
         # print(f"{i}. pos: {pos}, color: {color}")
-        for key, values in grouped_colors.items():
+        for key, values in grouped_bgr_colors.items():
             norm = int(np.linalg.norm(np.concatenate(cv2.subtract(values['color'], color, 1))))
             similar_color_key = key if norm <= threshold else None
             # print(f"norm: {values['color']} - {color} = {norm}, {key}")
@@ -504,30 +526,33 @@ def merge_colors(bar_stats_with_colors):
         h = pos[3]
 
         if similar_color_key is not None:
-            min_x = min(grouped_colors[similar_color_key]["x"], x)
-            min_y = min(grouped_colors[similar_color_key]["y"], y)
-            max_w = max(grouped_colors[similar_color_key]["x"] + grouped_colors[similar_color_key]["w"], x + w) - min_x
-            max_h = max(grouped_colors[similar_color_key]["y"] + grouped_colors[similar_color_key]["h"], y + h) - min_y
+            min_x = min(grouped_bgr_colors[similar_color_key]["x"], x)
+            min_y = min(grouped_bgr_colors[similar_color_key]["y"], y)
+            max_w = max(grouped_bgr_colors[similar_color_key]["x"] + grouped_bgr_colors[similar_color_key]["w"], x + w) - min_x
+            max_h = max(grouped_bgr_colors[similar_color_key]["y"] + grouped_bgr_colors[similar_color_key]["h"], y + h) - min_y
 
-            grouped_colors[similar_color_key]["x"] = min_x
-            grouped_colors[similar_color_key]["y"] = min_y
-            grouped_colors[similar_color_key]["w"] = max_w
-            grouped_colors[similar_color_key]["h"] = max_h
+            grouped_bgr_colors[similar_color_key]["x"] = min_x
+            grouped_bgr_colors[similar_color_key]["y"] = min_y
+            grouped_bgr_colors[similar_color_key]["w"] = max_w
+            grouped_bgr_colors[similar_color_key]["h"] = max_h
 
-            average = np.array(np.average([grouped_colors[similar_color_key]['color'], color], axis=0), np.uint8)
-            # print(f"{grouped_colors[similar_color_key]['color']} and {color} = {average}")
-            grouped_colors[similar_color_key]["color"] = average
+            average = np.array(np.average([grouped_bgr_colors[similar_color_key]['color'], color], axis=0), np.uint8)
+            # print(f"{grouped_bgr_colors[similar_color_key]['color']} and {color} = {average}")
+            grouped_bgr_colors[similar_color_key]["color"] = average
 
         else:
-            grouped_colors[len(grouped_colors)] = {
+            grouped_bgr_colors[len(grouped_bgr_colors)] = {
                 "color": color,
                 "x": x,
                 "y": y,
                 "w": w,
                 "h": h
             }
+            simple_chart_bar_color = color
 
-    print("\ngrouped_colors: {\n" + "\n".join(
-        "{!r}: {!r}".format(key, values) for key, values in grouped_colors.items()) + "}")
 
-    return grouped_colors
+    print("\ngrouped_bgr_colors: {\n" + "\n".join(
+        "{!r}: {!r}".format(key, values) for key, values in grouped_bgr_colors.items()) + "}")
+
+    return grouped_bgr_colors
+

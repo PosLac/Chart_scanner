@@ -1,87 +1,104 @@
+import cv2
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, QThread
 from PyQt5.QtGui import QPixmap, QMovie
-from PyQt5.QtWidgets import QMainWindow, QRadioButton, QLineEdit, QPushButton, QLabel, QCheckBox, QSpinBox
+from PyQt5.QtWidgets import QMainWindow, QRadioButton, QLineEdit, QPushButton, QLabel, QCheckBox, QSpinBox, QColorDialog
 
+from viewWithScene import ViewWithScene
 from functions import image_detectations as detects
 from functions.worker import Worker
 
 
 class EditWindow(QMainWindow):
-    work_requested = pyqtSignal(str, bool)
+    edit_work_requested = pyqtSignal(str, object, object)
 
     def __init__(self, parent_window):
         super(EditWindow, self).__init__()
-        self.parent_window = parent_window
-        self.minMax_array = None
         uic.loadUi("editWindow.ui", self)
 
+        # variables
+        self.parent_window = parent_window
+        self.title_str = ""
         self.title_pos = 0
+        self.legend_position = None
+        self.legend_image_bgr = None
+        self.minMax_array = None
+        self.input_chart = QPixmap("tikzdraw.png")
+        self.input_chart = self.input_chart.scaledToWidth(700)
+        self.update_bool = False
+        self.orientation = detects.orientation
+        self.ratios = detects.ratios
+        self.spinner = QMovie("Spin-1s-200px.gif")
+        self.simple_chart_bar_color = detects.simple_chart_bar_color  #todo beállítani alap színt
+
+        # edit_layout
+        self.color_picker_button = self.findChild(QPushButton, "color_picker_button")
+        self.color_picker_button.clicked.connect(self.open_color_picker)
+
+        # title_layout
         self.above = self.findChild(QRadioButton, "above")
         self.below = self.findChild(QRadioButton, "below")
         self.no_title = self.findChild(QRadioButton, "no_title")
         self.title = self.findChild(QLineEdit, "title_text")
-        self.update_button = self.findChild(QPushButton, "update_button")
-        self.back_button = self.findChild(QPushButton, "back")
-        self.loaded_chart = self.findChild(QLabel, "chart")
-        self.error_label = self.findChild(QLabel, "error_label")
-
-        self.export_button_pdf = self.findChild(QPushButton, "export_button_pdf")
-        self.export_button_png = self.findChild(QPushButton, "export_button_png")
-        print(self.export_button_png)
-        print(self.export_button_pdf)
-        self.export_button_pdf.clicked.connect(lambda: self.parent_window.export("pdf"))
-        self.export_button_png.clicked.connect(lambda: self.parent_window.export("png"))
-        self.back_button.clicked.connect(self.back_to_main)
-
-        self.title_str = ""
         self.title.setText(detects.chart_title)
-        input_chart = QPixmap("tikzdraw.png")
-        input_chart = input_chart.scaledToWidth(700)
-        self.loaded_chart.setPixmap(input_chart)
+        self.above.setChecked(self.parent_window.above.isChecked())
+        self.below.setChecked(self.parent_window.below.isChecked())
+        self.no_title.setChecked(self.parent_window.no_title.isChecked())
 
-        self.update_bool = False
-        self.orientation = detects.orientation
-        self.ratios = detects.ratios
-
+        # min_max_layout
         self.xMin_check = self.findChild(QCheckBox, "xMin_check")
         self.xMax_check = self.findChild(QCheckBox, "xMax_check")
         self.yMin_check = self.findChild(QCheckBox, "yMin_check")
         self.yMax_check = self.findChild(QCheckBox, "yMax_check")
-
         self.xMin = self.findChild(QSpinBox, "xMin")
         self.xMax = self.findChild(QSpinBox, "xMax")
         self.yMin = self.findChild(QSpinBox, "yMin")
         self.yMax = self.findChild(QSpinBox, "yMax")
-
         self.xMin_en = self.xMin_check.isChecked()
         self.xMax_en = self.xMax_check.isChecked()
         self.yMin_en = self.yMin_check.isChecked()
         self.yMax_en = self.yMax_check.isChecked()
-
         self.xMin_check.stateChanged.connect(lambda: self.minMax_toggle("xMin"))
         self.xMax_check.stateChanged.connect(lambda: self.minMax_toggle("xMax"))
         self.yMin_check.stateChanged.connect(lambda: self.minMax_toggle("yMin"))
         self.yMax_check.stateChanged.connect(lambda: self.minMax_toggle("yMax"))
 
-        self.above.setChecked(self.parent_window.above.isChecked())
-        self.below.setChecked(self.parent_window.below.isChecked())
-        self.no_title.setChecked(self.parent_window.no_title.isChecked())
-
+        # bottom_layout
+        self.error_label = self.findChild(QLabel, "error_label")
+        self.update_button = self.findChild(QPushButton, "update_button")
+        self.back_button = self.findChild(QPushButton, "back")
         self.update_button.clicked.connect(self.update_chart)
+        self.back_button.clicked.connect(self.back_to_main)
 
+        # output_layout
+        self.chart_view = self.findChild(ViewWithScene, "output_view")
+        self.chart_view.set_image(self.input_chart)
+        self.export_button_pdf = self.findChild(QPushButton, "export_button_pdf")
+        self.export_button_png = self.findChild(QPushButton, "export_button_png")
+        self.export_button_pdf.clicked.connect(lambda: self.parent_window.export("pdf"))
+        self.export_button_png.clicked.connect(lambda: self.parent_window.export("png"))
+
+        # workers
         self.worker = Worker(self)
         self.worker_thread = QThread()
         self.worker.fname.connect(self.update)
         self.worker.completed.connect(self.complete)
-        self.work_requested.connect(self.worker.do_work)
+        self.edit_work_requested.connect(self.workerStarted)
         self.worker.moveToThread(self.worker_thread)
         self.worker_thread.start()
 
-
         print("inited")
-        self.spinner = QMovie("Spin-1s-200px.gif")
-        self.showMaximized()
+        # self.showMaximized()
+
+    def open_color_picker(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            print(f"hexa: {color.name()}, rgb: {color.getRgb()}, {color.getRgb()[:3]}")
+            self.simple_chart_bar_color = color.getRgb()[:3]
+
+    def workerStarted(self, name, legend, legend_position):
+        print("editWindow worker started")
+        self.worker.update_chart(name, self.simple_chart_bar_color, legend, legend_position)
 
     def minMax_toggle(self, val):
         min_max = self.findChild(QSpinBox, val)
@@ -126,12 +143,13 @@ class EditWindow(QMainWindow):
             self.error_label.setText(error_list)
 
         else:
-            self.loaded_chart.setPixmap(QPixmap())
-            self.loaded_chart.setMovie(self.spinner)
+            # self.loaded_chart.setPixmap(QPixmap())
+            # self.loaded_chart.setMovie(self.spinner)
             self.spinner.start()
             self.minMax_array = [("xmin", self.xMin.value(), self.xMin_en), ("xmax", self.xMax.value(), self.xMax_en),
                                  ("ymin", self.yMin.value(), self.yMin_en), ("ymax", self.yMax.value(), self.yMax_en)]
-            self.work_requested.emit("", True)
+            self.edit_work_requested.emit("", self.legend_image_bgr, self.legend_position)
+        print("Update finished")
 
     def back_to_main(self):
         self.close()
