@@ -11,6 +11,7 @@ from functions.worker import Worker
 
 class EditWindow(QMainWindow):
     edit_work_requested = pyqtSignal(str, object, object)
+    generation_completed = pyqtSignal()
 
     def __init__(self, parent_window):
         super(EditWindow, self).__init__()
@@ -88,6 +89,8 @@ class EditWindow(QMainWindow):
         self.edit_work_requested.connect(self.workerStarted)
         self.worker.moveToThread(self.worker_thread)
         self.worker_thread.start()
+
+        self.generation_completed.connect(lambda: print("update done"))
 
         print("inited")
         # self.showMaximized()

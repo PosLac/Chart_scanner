@@ -1,10 +1,13 @@
 import numpy as np
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene
 
 
 class ViewWithScene(QGraphicsView):
+    set_generated_image = pyqtSignal(QPixmap)
+    image_setting_completed = pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super(ViewWithScene, self).__init__(*args, **kwargs)
         self.scene = QGraphicsScene()
@@ -17,6 +20,7 @@ class ViewWithScene(QGraphicsView):
         self.optimal_size = 700
         self.image = None
         self.original_size = None
+        self.set_generated_image.connect(self.set_image)
 
     def set_image(self, img):
         pixmap = img
@@ -53,3 +57,4 @@ class ViewWithScene(QGraphicsView):
         self.image = pixmap
         self.pixmap_item.setPixmap(pixmap)
         self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.image_setting_completed.emit()

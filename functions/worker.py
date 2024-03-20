@@ -4,9 +4,9 @@ from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread
 from PyQt5.QtGui import QPixmap
 
 import functions.image_detectations as detects
-import functions.image_edits as edits
-from functions.main import main
 import functions.to_latex as latex
+from functions.main import main
+
 
 class Worker(QObject):
     fname = pyqtSignal(str)
@@ -15,15 +15,18 @@ class Worker(QObject):
     def __init__(self, window):
         super().__init__()
         self.window = window
+        self.window.output_image_view.image_setting_completed.connect(self.window.generation_completed)
         # self.chart = pyqtSignal(QPixmap)
 
-    @pyqtSlot(str, bool)
+    @pyqtSlot(str, object, object)
     def create_chart(self, name, legend, legend_position):
         print('\tcreate_chart doing stuff in:', QThread.currentThread())
         print("create_chart")
         print(f"Contains legend: {legend is not None}")
 
-        if legend is not None: #todo Jelmagyazázat beolvasása gomb is elindítja ez egészet
+        self.fname.emit(name)
+
+        if legend is not None:  # todo Jelmagyazázat beolvasása gomb is elindítja ez egészet
             # main(name, self.window.title_pos, legend, legend_position)
             self.window.bars_with_texts = detects.scan_legend(legend)
             main(name, self.window.title_pos, True, self.window.bars_with_texts, legend_position)
@@ -47,17 +50,16 @@ class Worker(QObject):
         print("OS SYSTEM")
         os.system('pdf2png.bat tikzdraw 300')
         print("OS SYSTEM DONE")
-        output_chart = QPixmap("tikzdraw.png")
-        output_chart = output_chart.scaledToWidth(700)
+        # output_chart = QPixmap("tikzdraw.png")
+        # output_chart = output_chart.scaledToWidth(700)
         print("worker done")
         if name:
-            self.window.output_image_view.set_image(output_chart)
-            self.window.export_edit_group.setHidden(False)
+            self.window.output_image_view.set_generated_image.emit(QPixmap("tikzdraw.png"))
             print("MainWindow")
         else:
-            self.window.edit_window.output_image_view.set_image(output_chart)
+            self.window.edit_window.output_image_view.set_generated_image.emit(QPixmap("tikzdraw.png")) # todo emit
             print("EditWindow")
-        self.completed.emit()
+        print("create end")
 
     @pyqtSlot(str, bool)
     def update_chart(self, name, color, legend, legend_position):
@@ -86,11 +88,6 @@ class Worker(QObject):
         output_chart = QPixmap("tikzdraw.png")
         output_chart = output_chart.scaledToWidth(700)
         print("worker done")
-        if name:
-            self.window.output_image_view.set_image(output_chart)
-            self.window.export_edit_group.setHidden(False)
-            print("MainWindow")
-        else:
-            self.window.output_image_view.set_image(output_chart)
-            print("EditWindow")
-        self.completed.emit()
+        self.window.output_image_view.set_generated_image.emit(QPixmap("tikzdraw.png"))
+        print("EditWindow")
+        # self.completed.emit()

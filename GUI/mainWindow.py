@@ -1,9 +1,6 @@
 import sys
 from shutil import copyfile
 
-import sys
-from shutil import copyfile
-
 import cv2
 import numpy as np
 from PyQt5 import uic
@@ -22,6 +19,7 @@ from viewWithScene import ViewWithScene
 
 class MainWindow(QMainWindow):
     main_work_requested = pyqtSignal(str, object, object)
+    generation_completed = pyqtSignal()
 
     def __init__(self, parent_window):
         super(MainWindow, self).__init__()
@@ -84,11 +82,13 @@ class MainWindow(QMainWindow):
         # worker config
         self.worker = worker.Worker(self)
         self.worker_thread = QThread()
+        self.worker.moveToThread(self.worker_thread)
         self.worker.fname.connect(self.update)
         # self.worker.completed.connect(self.worker_thread.exit)
         self.worker.completed.connect(self.workerCompleted)
-        self.main_work_requested.connect(self.workerStarted)
-        self.worker.moveToThread(self.worker_thread)
+        # self.main_work_requested.connect(self.workerStarted)
+        self.main_work_requested.connect(self.worker.create_chart)
+        self.generation_completed.connect(lambda: self.export_edit_group.setHidden(False))
         self.worker_thread.start()
 
         self.read_legend_button = self.findChild(QPushButton, "read_legend")
@@ -97,12 +97,14 @@ class MainWindow(QMainWindow):
 
         self.showMaximized()
 
-    def workerStarted(self, str, legend, legend_position):
-        print("mainWindow worker started")
-        self.worker.create_chart(str, legend, legend_position)
+    # def workerStarted(self, str, legend, legend_position):
+    #     print("mainWindow worker started")
+    #     self.scanButton.setText("ad")
+    #     self.worker.create_chart(str, legend, legend_position)
 
     def workerCompleted(self):
         print("mainWindow worker completed")
+
         self.worker_thread.exit()
 
     def contains_legend_changed(self):
@@ -166,7 +168,7 @@ class MainWindow(QMainWindow):
 
         print("fname", self.parent_window.file_name)
         self.main_work_requested.emit(self.parent_window.file_name, None, None)
-        self.spinner.start()
+        # self.spinner.start()
 
     def export(self, type):
         input_file = "tikzdraw." + type

@@ -1,3 +1,4 @@
+import faulthandler
 import sys
 
 import cv2
@@ -80,6 +81,7 @@ class InputChartWindow(QMainWindow):
 
 
 if __name__ == "__main__":
+    faulthandler.enable()
     app = QApplication(sys.argv)
     inputWindow = InputChartWindow()
     sys.exit(app.exec_())
