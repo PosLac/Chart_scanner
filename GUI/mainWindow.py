@@ -1,20 +1,23 @@
-from shutil import copyfile
 import sys
+from shutil import copyfile
+
+import sys
+from shutil import copyfile
 
 import cv2
 import numpy as np
 from PyQt5 import uic
-from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtCore import QThread
+from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QMovie, QPixmap
 from PyQt5.QtWidgets import QFileDialog, QMainWindow, QPushButton, QLabel, QApplication, QRadioButton, QGroupBox, \
     QGridLayout, QCheckBox
 
-from inputImageViewMouseDrag import InputImageViewMouseDrag
-from functions import worker
-from viewWithScene import ViewWithScene
 from editWindow import EditWindow
+from functions import worker
+from inputImageViewMouseDrag import InputImageViewMouseDrag
+from viewWithScene import ViewWithScene
 
 
 class MainWindow(QMainWindow):
@@ -34,7 +37,7 @@ class MainWindow(QMainWindow):
         self.file_name_label.setText(parent_window.file_name_label.text())
         self.input_image_view = self.findChild(InputImageViewMouseDrag, "input_image_view")
         # self.input_image_view = self.findChild(InputImageView, "input_image_view")
-        self.input_image_view.setScene(self.input_image_view.scene())
+        self.input_image_view.setScene(self.input_image_view.scene)
         self.back_button.clicked.connect(self.back_to_input_window)
 
         # legend_group
@@ -60,7 +63,7 @@ class MainWindow(QMainWindow):
         self.output_title = self.findChild(QLabel, "output_title")
         self.output_layout = self.findChild(QGridLayout, "output_layout")
         self.output_image_view = self.findChild(ViewWithScene, "output_view")
-        self.output_image_view.setScene(self.output_image_view.scene())
+        self.output_image_view.setScene(self.output_image_view.scene)
         self.input_image_view.cropped.connect(self.output_image_view.set_image)
         self.input_image_view.cropped.connect(self.legend_has_cropped)
         self.output_layout.addWidget(self.output_image_view, 1, 0, alignment=Qt.AlignHCenter)
@@ -174,6 +177,7 @@ class MainWindow(QMainWindow):
 
     def open_edit_window(self):
         self.edit_window = EditWindow(self)
+        self.edit_window.output_image_view.set_image(self.output_image_view.image)
         self.edit_window.legend_image_bgr = self.legend_image_bgr
         self.edit_window.legend_position = self.input_image_view.cropped_pos
         self.close()

@@ -24,7 +24,7 @@ class InputChartWindow(QMainWindow):
         # left_grid_layout
         self.left_grid_layout = self.findChild(QGridLayout, "left_grid_layout")
         self.input_image_view = self.findChild(InputImageViewMouseDrag, "input_image_view")
-        self.input_image_view.setScene(self.input_image_view.scene())
+        self.input_image_view.setScene(self.input_image_view.scene)
         self.input_image_view.cropped.connect(
             lambda: self.jump_to_scan_button.setHidden(False))  # todo false -> not előző állapot
         self.left_grid_layout.addWidget(self.input_image_view, 1, 0, alignment=Qt.AlignHCenter)
@@ -35,7 +35,7 @@ class InputChartWindow(QMainWindow):
         # right_grid_layout
         self.right_grid_layout = self.findChild(QGridLayout, "right_grid_layout")
         self.output_image_view = self.findChild(ViewWithScene, "cropped_chart_view")
-        self.output_image_view.setScene(self.output_image_view.scene())
+        self.output_image_view.setScene(self.output_image_view.scene)
         self.input_image_view.cropped.connect(self.output_image_view.set_image)
         self.right_grid_layout.addWidget(self.output_image_view, 1, 0, alignment=Qt.AlignHCenter)
         self.jump_to_scan_button = self.findChild(QPushButton, "jump_to_scan")

@@ -73,8 +73,8 @@ class EditWindow(QMainWindow):
         self.back_button.clicked.connect(self.back_to_main)
 
         # output_layout
-        self.chart_view = self.findChild(ViewWithScene, "output_view")
-        self.chart_view.set_image(self.input_chart)
+        self.output_image_view = self.findChild(ViewWithScene, "output_view")
+        self.output_image_view.setScene(self.output_image_view.scene)
         self.export_button_pdf = self.findChild(QPushButton, "export_button_pdf")
         self.export_button_png = self.findChild(QPushButton, "export_button_png")
         self.export_button_pdf.clicked.connect(lambda: self.parent_window.export("pdf"))

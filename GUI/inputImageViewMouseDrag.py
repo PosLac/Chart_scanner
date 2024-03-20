@@ -64,9 +64,9 @@ class InputImageViewMouseDrag(ViewWithScene):
         self.cropped.emit(img)
 
     def clear_scene(self):
-        if len(self.scene().items()) > 1:
-            self.scene().clear()
-            self.pixmap_item = self.scene().addPixmap(QPixmap())
+        if len(self.scene.items()) > 1:
+            self.scene.clear()
+            self.pixmap_item = self.scene.addPixmap(QPixmap())
 
     def set_image(self, pixmap):
         w = pixmap.width()

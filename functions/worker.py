@@ -1,6 +1,6 @@
 import os
 
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot as Slot
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread
 from PyQt5.QtGui import QPixmap
 
 import functions.image_detectations as detects
@@ -15,11 +15,12 @@ class Worker(QObject):
     def __init__(self, window):
         super().__init__()
         self.window = window
-        self.chart = pyqtSignal(QPixmap)
+        # self.chart = pyqtSignal(QPixmap)
 
-    @Slot(str, bool)
+    @pyqtSlot(str, bool)
     def create_chart(self, name, legend, legend_position):
-        print("do_work")
+        print('\tcreate_chart doing stuff in:', QThread.currentThread())
+        print("create_chart")
         print(f"Contains legend: {legend is not None}")
 
         if legend is not None: #todo Jelmagyazázat beolvasása gomb is elindítja ez egészet
@@ -54,11 +55,11 @@ class Worker(QObject):
             self.window.export_edit_group.setHidden(False)
             print("MainWindow")
         else:
-            self.window.edit_window.chart_view.set_image(output_chart)
+            self.window.edit_window.output_image_view.set_image(output_chart)
             print("EditWindow")
         self.completed.emit()
 
-    @Slot(str, bool)
+    @pyqtSlot(str, bool)
     def update_chart(self, name, color, legend, legend_position):
         print("update_chart started")
 
@@ -74,9 +75,10 @@ class Worker(QObject):
         #       self.window.ratios, self.window.minMax_array,
         #       self.window.title_str, self.window.title_pos)
 
-        grouped = False # todo
+        grouped = False  # todo
         latex.prepare_data_for_update(self.window.orientation, grouped, self.window.ratios, color,
-                                      None, None, self.window.minMax_array, self.window.title_str, self.window.title_pos)
+                                      None, None, self.window.minMax_array, self.window.title_str,
+                                      self.window.title_pos)
 
         print("OS SYSTEM")
         os.system('pdf2png.bat tikzdraw 300')
@@ -89,6 +91,6 @@ class Worker(QObject):
             self.window.export_edit_group.setHidden(False)
             print("MainWindow")
         else:
-            self.window.chart_view.set_image(output_chart)
+            self.window.output_image_view.set_image(output_chart)
             print("EditWindow")
         self.completed.emit()
