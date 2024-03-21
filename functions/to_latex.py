@@ -258,9 +258,9 @@ def prepare_data_for_generation(orientation, grouped, ratios, bars_with_data=Non
     plot_options_array = prepare_title_above(False, plot_options_array, title, title_pos)
 
     if orientation == 'xbar':
-        m = detects.r_new_numbers[0][7]
+        max_number = detects.r_new_numbers[0][7]
     else:
-        m = detects.c_new_numbers[0][7]
+        max_number = detects.c_new_numbers[0][7]
 
     # set options for grouped chart
     if grouped:
@@ -275,7 +275,7 @@ def prepare_data_for_generation(orientation, grouped, ratios, bars_with_data=Non
     else:
         if orientation == 'xbar':
             ratios = np.flip(ratios)
-            ratios *= m
+        ratios *= max_number
 
         coordinates = []
         for bar_index in range(len(ratios)):
@@ -291,10 +291,10 @@ def prepare_data_for_generation(orientation, grouped, ratios, bars_with_data=Non
             define_color_arguments.append(["color" + str(key + 1), "RGB", color_str])
 
 
-    print(f"ratios: {ratios}")
-    print(f"legend_arguments: {legend_arguments}")
-    print(f"define_color_arguments: {define_color_arguments}")
-    print(f"group_coordinates: {coordinates_with_options}")
+    print(f"\tratios: {ratios}")
+    print(f"\tlegend_arguments: {legend_arguments}")
+    print(f"\tdefine_color_arguments: {define_color_arguments}")
+    print(f"\tgroup_coordinates: {coordinates_with_options}")
 
     plot_options_str = ", ".join(plot_options_array)
 
@@ -313,7 +313,7 @@ def prepare_data_for_update(orientation, grouped, ratios, color, bars_with_data=
 
     # set minimum and maximum values for x and y-axis
     if min_max_array:
-        print(f"min_may_array: {min_max_array}")
+        print(f"\tmin_max_array: {min_max_array}")
         for min_max in min_max_array:
             if min_max[2]:
                 plot_options_array.append(NoEscape(min_max[0] + "=" + str(min_max[1])))
@@ -344,9 +344,9 @@ def prepare_data_for_update(orientation, grouped, ratios, color, bars_with_data=
         color_str = ", ".join(map(str, color))
         define_color_arguments.append(["color1", "RGB", color_str])
 
-    print(f"ratios: {ratios}")
-    print(f"define_color_arguments: {define_color_arguments}")
-    print(f"group_coordinates: {coordinates_with_options}")
+    print(f"\tratios: {ratios}")
+    print(f"\tdefine_color_arguments: {define_color_arguments}")
+    print(f"\tgroup_coordinates: {coordinates_with_options}")
 
     plot_options_str = ", ".join(plot_options_array)
 

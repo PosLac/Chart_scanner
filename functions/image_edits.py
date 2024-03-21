@@ -1,8 +1,7 @@
 import math
+
 import cv2
 import numpy as np
-
-import functions.image_detectations as detects
 
 UPSCALE_RATE = 2
 NUM_SIZE = 0
@@ -165,7 +164,7 @@ def morphological_transform(img) -> np.ndarray:
     # cv2.imwrite('bars1.png', bars)
 
     _, bars_with_labels, stats, _ = cv2.connectedComponentsWithStats(bars, None, 8)
-    print('stat_len: ', len(stats))
+    print('\tstat_len: ', len(stats))
     # print('stats2: ', stats)
     elements = stats.copy()
 

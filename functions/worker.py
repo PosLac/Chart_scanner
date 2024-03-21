@@ -1,6 +1,6 @@
 import os
 
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QPixmap
 
 import functions.image_detectations as detects
@@ -20,8 +20,7 @@ class Worker(QObject):
 
     @pyqtSlot(str, object, object)
     def create_chart(self, name, legend, legend_position):
-        print('\tcreate_chart doing stuff in:', QThread.currentThread())
-        print("create_chart")
+        print("Creation started")
         print(f"Contains legend: {legend is not None}")
 
         self.fname.emit(name)
@@ -52,7 +51,7 @@ class Worker(QObject):
         print("OS SYSTEM DONE")
         # output_chart = QPixmap("tikzdraw.png")
         # output_chart = output_chart.scaledToWidth(700)
-        print("worker done")
+        print("Worker done")
         self.window.output_image_view.set_generated_image.emit(QPixmap("tikzdraw.png"))
         print("MainWindow")
         print("create end")
@@ -83,7 +82,7 @@ class Worker(QObject):
         print("OS SYSTEM DONE")
         output_chart = QPixmap("tikzdraw.png")
         output_chart = output_chart.scaledToWidth(700)
-        print("worker done")
+        print("Worker done")
         self.window.output_image_view.set_generated_image.emit(QPixmap("tikzdraw.png"))
         print("EditWindow")
         # self.completed.emit()

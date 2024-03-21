@@ -26,7 +26,6 @@ class ViewWithScene(QGraphicsView):
         self.label = None
 
     def add_label(self):
-        print("add_label")
         self.scene.clear()
         self.label = QLabel()
         self.item = self.scene.addWidget(self.label)
@@ -67,7 +66,7 @@ class ViewWithScene(QGraphicsView):
         # print(f"{round(pixmap.width() / w, 4)}")
 
         # print(f"{pixmap.width() / w}, {pixmap.height() / h}")
-        print(f"ViewWithScene resized from {pixmap.width()}x{pixmap.height()} to {w}x{h}, aspect_ratio: {self.aspect_ratio}, resize_ratio {self.resize_ratio}")
+        print(f"\tViewWithScene resized from {pixmap.width()}x{pixmap.height()} to {w}x{h}, aspect_ratio: {self.aspect_ratio}, resize_ratio {self.resize_ratio}")
         self.scene.clear()
         self.pixmap_item = self.scene.addPixmap(QPixmap())
         self.setFixedSize(w, h)

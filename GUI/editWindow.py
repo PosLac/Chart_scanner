@@ -88,7 +88,7 @@ class EditWindow(QMainWindow):
         self.worker.moveToThread(self.worker_thread)
         self.worker_thread.start()
 
-        self.generation_completed.connect(lambda: print("update done"))
+        self.generation_completed.connect(lambda: print("Update done"))
 
         print("inited")
         # self.showMaximized()

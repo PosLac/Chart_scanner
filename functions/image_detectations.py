@@ -286,9 +286,9 @@ def row_int():
             numbers_str[j] = str(numbers_str[j])
         j += 1
 
-    print('numbers: ', numbers_str)
-    print('c_numbers: ', c_new_numbers)
-    print('numbers_str: ', numbers_str)
+    print('\tnumbers: ', numbers_str)
+    print('\tc_numbers: ', c_new_numbers)
+    print('\tnumbers_str: ', numbers_str)
     j = 0
 
     for c_number in c_numbers:
@@ -315,7 +315,7 @@ def row_int():
         r_new_numbers.append(r_number)
         j += 1
 
-    print('numbers: ', numbers)
+    print('\tnumbers: ', numbers)
 
 
 def detect_title(has_title):
@@ -368,6 +368,8 @@ def define_orientation():
         f_or_s = 1
         orientation = 'xbar'
         max_y = r_new_numbers[0]
+
+    print(f"\t{'Horizontal' if orientation == 'xbar' else 'Vertical'} chart detected")
 
     for element in elements:
         if element[x_v] > max_full[x_v]:
@@ -508,7 +510,7 @@ def scan_legend(legend):
 def merge_colors(bar_stats_with_colors):
     global simple_chart_bar_color
 
-    print(f"bar_stats_with_colors: {bar_stats_with_colors}")
+    print(f"\tbar_stats_with_colors: {bar_stats_with_colors}")
     grouped_bgr_colors = {}
     threshold = 30
     similar_color_key = None
@@ -551,7 +553,7 @@ def merge_colors(bar_stats_with_colors):
             simple_chart_bar_color = color
 
 
-    print("\ngrouped_bgr_colors: {\n" + "\n".join(
+    print("\tgrouped_bgr_colors: {\n" + "\n\t".join(
         "{!r}: {!r}".format(key, values) for key, values in grouped_bgr_colors.items()) + "}")
 
     return grouped_bgr_colors

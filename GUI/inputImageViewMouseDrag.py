@@ -1,9 +1,8 @@
-import numpy as np
-from PyQt5.QtCore import Qt, pyqtSignal, QPoint, QRect, QSize
-from PyQt5.QtGui import QPen, QBrush, QImage
-from PyQt5.QtGui import QPixmap, QPolygonF, QPainterPath, QPainter
-from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsEllipseItem, QGraphicsScene, QRubberBand
 import cv2
+import numpy as np
+from PyQt5.QtCore import Qt, pyqtSignal, QRect, QSize
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QRubberBand
 
 from viewWithScene import ViewWithScene
 
@@ -30,7 +29,6 @@ class InputImageViewMouseDrag(ViewWithScene):
             self.originQPoint = event.pos()
             self.currentQRubberBand = QRubberBand(QRubberBand.Rectangle, self)
             self.currentQRubberBand.setGeometry(QRect(self.originQPoint, QSize()))
-            print(f"currentQRubberBand {self.currentQRubberBand.geometry()}")
             self.currentQRubberBand.show()
 
     def mouseMoveEvent(self, event):
@@ -42,8 +40,6 @@ class InputImageViewMouseDrag(ViewWithScene):
             self.currentQRubberBand.hide()
             current_q_rect = self.currentQRubberBand.geometry()
             self.cropped_pos = current_q_rect
-            print(f"release: {self.cropped_pos}")
-            print(f"release: {current_q_rect.topLeft()}, {current_q_rect.bottomRight()}")
             self.crop_rect = QRect(self.mapToScene(current_q_rect.topLeft()).toPoint(),
                                    self.mapToScene(current_q_rect.bottomRight()).toPoint()).normalized()
             # self.currentQRubberBand.deleteLater()
@@ -59,7 +55,7 @@ class InputImageViewMouseDrag(ViewWithScene):
 
         img = cv2.cvtColor(
             np.array(arr).reshape(height, width, 4),
-            cv2.COLOR_BGRA2BGR
+            cv2.COLOR_RGBA2BGR
         )
         self.cropped.emit(img)
 
@@ -82,7 +78,7 @@ class InputImageViewMouseDrag(ViewWithScene):
             h = int(w / self.aspect_ratio)
             self.resize_ratio = round(pixmap.width() / w, 4)
 
-        print(f"InputImageView resized from {pixmap.width()}x{pixmap.height()} to {w}x{h}, aspect_ratio: {self.aspect_ratio}, resize_ratio {self.resize_ratio}")
+        print(f"\tInputImageView resized from {pixmap.width()}x{pixmap.height()} to {w}x{h}, aspect_ratio: {self.aspect_ratio}, resize_ratio {self.resize_ratio}")
         self.setFixedSize(w, h)
         self.image = pixmap
         self.pixmap_item.setPixmap(pixmap)

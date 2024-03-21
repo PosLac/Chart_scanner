@@ -97,11 +97,6 @@ class MainWindow(QMainWindow):
 
         self.showMaximized()
 
-    # def workerStarted(self, str, legend, legend_position):
-    #     print("mainWindow worker started")
-    #     self.scanButton.setText("ad")
-    #     self.worker.create_chart(str, legend, legend_position)
-
     def workerCompleted(self):
         print("mainWindow worker completed")
 
@@ -171,7 +166,7 @@ class MainWindow(QMainWindow):
         elif self.no_title.isChecked():
             self.title_pos = 0
 
-        print("fname", self.parent_window.file_name)
+        print(f"File name: {self.parent_window.file_name}")
         self.main_work_requested.emit(self.parent_window.file_name, None, None)
         # self.spinner.start()
 
@@ -180,7 +175,7 @@ class MainWindow(QMainWindow):
         dst = QFileDialog.getSaveFileName(self, 'Save File', 'tikzdraw.' + type, "*." + type)[0]
         if dst:
             copyfile(input_file, dst)
-        print("copy done")
+        print("Copy done")
 
     def open_edit_window(self):
         self.edit_window = EditWindow(self)
