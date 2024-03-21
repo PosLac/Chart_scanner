@@ -4,7 +4,7 @@ from shutil import copyfile
 import cv2
 import numpy as np
 from PyQt5 import uic
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtSlot
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QMovie, QPixmap
@@ -158,7 +158,12 @@ class MainWindow(QMainWindow):
 
         self.main_work_requested.emit(self.parent_window.file_name, self.legend_image_bgr, legend_position)
 
+    @pyqtSlot()
+    def set_loading_sceen(self):
+        self.output_image_view.add_label()
+
     def scan_chart(self):
+        self.set_loading_sceen()
         if self.above.isChecked():
             self.title_pos = 1
         elif self.below.isChecked():

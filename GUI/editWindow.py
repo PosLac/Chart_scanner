@@ -1,16 +1,15 @@
-import cv2
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal, QThread
+from PyQt5.QtCore import pyqtSignal, QThread, pyqtSlot
 from PyQt5.QtGui import QPixmap, QMovie
 from PyQt5.QtWidgets import QMainWindow, QRadioButton, QLineEdit, QPushButton, QLabel, QCheckBox, QSpinBox, QColorDialog
 
-from viewWithScene import ViewWithScene
 from functions import image_detectations as detects
 from functions.worker import Worker
+from viewWithScene import ViewWithScene
 
 
 class EditWindow(QMainWindow):
-    edit_work_requested = pyqtSignal(str, object, object)
+    edit_work_requested = pyqtSignal(str, object, object, object)
     generation_completed = pyqtSignal()
 
     def __init__(self, parent_window):
@@ -85,8 +84,7 @@ class EditWindow(QMainWindow):
         self.worker = Worker(self)
         self.worker_thread = QThread()
         self.worker.fname.connect(self.update)
-        self.worker.completed.connect(self.complete)
-        self.edit_work_requested.connect(self.workerStarted)
+        self.edit_work_requested.connect(self.worker.update_chart)
         self.worker.moveToThread(self.worker_thread)
         self.worker_thread.start()
 
@@ -102,9 +100,9 @@ class EditWindow(QMainWindow):
             self.simple_chart_bar_color = color.getRgb()[:3]
             self.color_label.setStyleSheet(f"background: rgb({', '.join(map(str, self.simple_chart_bar_color))})")
 
-    def workerStarted(self, name, legend, legend_position):
-        print("editWindow worker started")
-        self.worker.update_chart(name, self.simple_chart_bar_color, legend, legend_position)
+    # def workerStarted(self, name, legend, legend_position):
+    #     print("editWindow worker started")
+    #     self.worker.update_chart(name, self.simple_chart_bar_color, legend, legend_position)
 
     def minMax_toggle(self, val):
         min_max = self.findChild(QSpinBox, val)
@@ -113,14 +111,13 @@ class EditWindow(QMainWindow):
             spinbox = self.findChild(QSpinBox, val)
             spinbox.setValue(0)
 
-    def update(self):
-        print("update")
-
-    def complete(self):
-        print("complete")
+    @pyqtSlot()
+    def set_loading_sceen(self):
+        self.output_image_view.add_label()
 
     def update_chart(self):
         print("Update start")
+        self.set_loading_sceen()
         error_list = ""
         self.update_bool = True
         self.xMin_en = self.xMin_check.isChecked()
@@ -154,7 +151,7 @@ class EditWindow(QMainWindow):
             self.spinner.start()
             self.minMax_array = [("xmin", self.xMin.value(), self.xMin_en), ("xmax", self.xMax.value(), self.xMax_en),
                                  ("ymin", self.yMin.value(), self.yMin_en), ("ymax", self.yMax.value(), self.yMax_en)]
-            self.edit_work_requested.emit("", self.legend_image_bgr, self.legend_position)
+            self.edit_work_requested.emit("", self.simple_chart_bar_color, self.legend_image_bgr, self.legend_position)
         print("Update finished")
 
     def back_to_main(self):

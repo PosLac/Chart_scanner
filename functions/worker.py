@@ -53,15 +53,11 @@ class Worker(QObject):
         # output_chart = QPixmap("tikzdraw.png")
         # output_chart = output_chart.scaledToWidth(700)
         print("worker done")
-        if name:
-            self.window.output_image_view.set_generated_image.emit(QPixmap("tikzdraw.png"))
-            print("MainWindow")
-        else:
-            self.window.edit_window.output_image_view.set_generated_image.emit(QPixmap("tikzdraw.png")) # todo emit
-            print("EditWindow")
+        self.window.output_image_view.set_generated_image.emit(QPixmap("tikzdraw.png"))
+        print("MainWindow")
         print("create end")
 
-    @pyqtSlot(str, bool)
+    @pyqtSlot(str, object, object, object)
     def update_chart(self, name, color, legend, legend_position):
         print("update_chart started")
 

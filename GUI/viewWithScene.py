@@ -1,12 +1,13 @@
 import numpy as np
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QPixmap, QImage
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene
+from PyQt5.QtGui import QPixmap, QImage, QMovie
+from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QLabel
 
 
 class ViewWithScene(QGraphicsView):
     set_generated_image = pyqtSignal(QPixmap)
     image_setting_completed = pyqtSignal()
+    start_spinner_signal = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super(ViewWithScene, self).__init__(*args, **kwargs)
@@ -21,6 +22,20 @@ class ViewWithScene(QGraphicsView):
         self.image = None
         self.original_size = None
         self.set_generated_image.connect(self.set_image)
+        self.movie = None
+        self.label = None
+
+    def add_label(self):
+        print("add_label")
+        self.scene.clear()
+        self.label = QLabel()
+        self.item = self.scene.addWidget(self.label)
+        self.movie = QMovie("Others/Spin-1s-200px.gif")
+        self.label.setMovie(self.movie)
+        self.label.setGeometry(0, 0, 200, 200)
+        self.movie.start()
+        self.item.setPos((self.scene.width() - self.label.width()) / 2,
+                         (self.scene.height() - self.label.height()) / 2)
 
     def set_image(self, img):
         pixmap = img
@@ -53,6 +68,8 @@ class ViewWithScene(QGraphicsView):
 
         # print(f"{pixmap.width() / w}, {pixmap.height() / h}")
         print(f"ViewWithScene resized from {pixmap.width()}x{pixmap.height()} to {w}x{h}, aspect_ratio: {self.aspect_ratio}, resize_ratio {self.resize_ratio}")
+        self.scene.clear()
+        self.pixmap_item = self.scene.addPixmap(QPixmap())
         self.setFixedSize(w, h)
         self.image = pixmap
         self.pixmap_item.setPixmap(pixmap)
