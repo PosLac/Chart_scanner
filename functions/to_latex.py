@@ -246,11 +246,13 @@ import functions.image_edits as edits
 
 
 def prepare_data_for_generation(orientation, grouped, ratios, bars_with_data=None, legend_position=None, title=None, title_pos=None):
-    # if bars_with_texts is None:
-    #     bars_with_texts = {
-    #         0: {'bar_color': [181, 180, 253], 'bar_x': 41, 'bar_y': 19, 'bar_w': 36, 'bar_h': 40, 'text': ''}
-    #     }
-    plot_options_array = [NoEscape(orientation), NoEscape('name=mygraph')]
+    print("\t Prepare data for generation")
+    if bars_with_data is None:
+        bars_with_data = {
+            0: {'bar_color': [179, 179, 255], 'bar_x': 21, 'bar_y': 18, 'bar_w': 36, 'bar_h': 40, 'text': 'Label-1'},
+            1: {'bar_color': [253, 180, 181], 'bar_x': 21, 'bar_y': 70, 'bar_w': 36, 'bar_h': 40, 'text': 'Label-2'}
+        }
+    plot_options_array = [orientation, 'name=mygraph']
     define_color_arguments = []
     coordinates_with_options = []
 
@@ -304,7 +306,7 @@ def prepare_data_for_generation(orientation, grouped, ratios, bars_with_data=Non
 
 def prepare_data_for_update(orientation, grouped, ratios, color, bars_with_data=None, legend_position=None, min_max_array=None, title=None, title_pos=None):
     legend_arguments = ""
-    plot_options_array = [NoEscape(orientation), NoEscape('name=mygraph')]
+    plot_options_array = [orientation, 'name=mygraph']
     define_color_arguments = []
     coordinates_with_options = []
 
@@ -316,7 +318,7 @@ def prepare_data_for_update(orientation, grouped, ratios, color, bars_with_data=
         print(f"\tmin_max_array: {min_max_array}")
         for min_max in min_max_array:
             if min_max[2]:
-                plot_options_array.append(NoEscape(min_max[0] + "=" + str(min_max[1])))
+                plot_options_array.append(min_max[0] + "=" + str(min_max[1]))
 
     # set options for grouped chart
     if grouped:
@@ -357,17 +359,16 @@ def prepare_data_for_update(orientation, grouped, ratios, color, bars_with_data=
 def prepare_data_for_grouped_chart(update, plot_options_array, orientation, ratios, legend_position, bars_with_texts, define_color_arguments, coordinates_with_options):
     legend_arguments = ""
     img_width, img_height = edits.img_orig_color.shape[:2]
-    print(f"img_width, img_height {img_width, img_height}")
+    # print(f"img_width, img_height {img_width, img_height}")
 
     legend_top_right_orig = legend_position.topRight()
-    print(f"legend_top_right {legend_top_right_orig}")
+    # print(f"legend_top_right {legend_top_right_orig}")
 
     legend_top_right_calculated = (
-        round(legend_top_right_orig.x() / img_width, 2), 1 - round(legend_top_right_orig.y() / img_height, 2))
-    print(f"legend_top_right_calculated {legend_top_right_calculated}")
+        round(img_width / legend_top_right_orig.x(), 2), 1 - round(legend_top_right_orig.y() / img_height, 2))
 
-    plot_options_array.append(NoEscape("legend style={at={" + str(legend_top_right_calculated) + "}}"))
-    print(f"plot_options: {plot_options_array}")
+    plot_options_array.append("legend style={at={" + str(legend_top_right_calculated) + "}}")
+    print(f"\tplot_options: {plot_options_array}")
 
     if orientation == 'xbar':
         for i in range(len(ratios)):
@@ -380,11 +381,11 @@ def prepare_data_for_grouped_chart(update, plot_options_array, orientation, rati
         define_color_arguments.append(["color" + str(key + 1), "RGB", color_str])
         legend_arguments = ", ".join(value["text"] for key, value in bars_with_texts.items())
 
-    print(f"legend_arguments: {legend_arguments}")
+    print(f"\tlegend_arguments: {legend_arguments}")
 
     for group_index in range(len(ratios)):
         group = ratios[group_index]
-        print(f"group: ", group)
+        # print(f"group: {group}")
         group_coordinates = []
         for bar_index in range(len(group)):
             if orientation == "xbar":
@@ -402,7 +403,7 @@ def prepare_title_above(update, plot_options_array, title, title_pos):
         # title above the chart
         if title_pos == 1:
             detects.chart_title = title
-            plot_options_array.append(NoEscape('title=' + title))
+            plot_options_array.append('title=' + title)
 
         # title below the chart
         elif title_pos == -1:
@@ -412,7 +413,7 @@ def prepare_title_above(update, plot_options_array, title, title_pos):
         # title above the chart
         if title_pos == 1:
             detects.chart_title = detects.detect_title(1)
-            plot_options_array.append(NoEscape('title=' + detects.chart_title))
+            plot_options_array.append('title=' + detects.chart_title)
 
         # title below the chart
         elif title_pos == -1:
@@ -422,7 +423,7 @@ def prepare_title_above(update, plot_options_array, title, title_pos):
 
 
 def generate_latex(plot_options, legend_arguments, define_color_arguments, coordinates_with_options, title, title_pos):
-    print("latex generation started")
+    print("Latex generation started")
 
     doc = Document(documentclass='standalone')
     doc.preamble.append(Command('usetikzlibrary', 'positioning'))
@@ -431,12 +432,12 @@ def generate_latex(plot_options, legend_arguments, define_color_arguments, coord
         for arguments in define_color_arguments:
             tikz.append(Command("definecolor", arguments=arguments))
 
-        with doc.create(Axis(options=plot_options)) as plot:
+        with doc.create(Axis(options=NoEscape(plot_options))) as plot:
             for (coordinates, options) in coordinates_with_options:
-                plot.append(Plot(coordinates=coordinates, options=options))
+                plot.append(Plot(coordinates=coordinates, options=NoEscape(options)))
             # insert legend
             if legend_arguments != "":
-                plot.append(Command("legend", arguments=legend_arguments))
+                plot.append(Command("legend", arguments=NoEscape(legend_arguments)))
 
         # insert title below the chart
         if title_pos == -1:
@@ -444,4 +445,4 @@ def generate_latex(plot_options, legend_arguments, define_color_arguments, coord
             doc.append(node_chain)
 
     doc.generate_pdf('tikzdraw', clean_tex=False, compiler='pdfLaTeX')
-    print("latex generation finished")
+    print("Latex generation finished")

@@ -143,11 +143,11 @@ def rotate():
     img_gray = cv2.warpAffine(img_gray, m, (cols, rows))
 
 
-def morphological_transform(img) -> np.ndarray:
+def morphological_transform(img, legend_position) -> np.ndarray:
     """
 
     """
-    global bar_hs, chart_with_bars_img, bars, bars_with_labels
+    global bar_hs, chart_with_bars_img, bars, bars_with_labels, elements
     # cv2.imshow('chart_with_bars_img', chart_with_bars_img)
     retval = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     bars = cv2.dilate(img, retval)
@@ -163,18 +163,22 @@ def morphological_transform(img) -> np.ndarray:
     # imshow_resized("bars2", bars, 0.5)
     # cv2.imwrite('bars1.png', bars)
 
+    # Remove legend bars
+    if legend_position:
+        legend_start_x = legend_position.topLeft().x() * UPSCALE_RATE
+        legend_start_y = legend_position.topLeft().y() * UPSCALE_RATE
+        legend_end_x = legend_position.bottomRight().x() * UPSCALE_RATE
+        legend_end_y = legend_position.bottomRight().y() * UPSCALE_RATE
+        bars[legend_start_y:legend_end_y, legend_start_x:legend_end_x] = 0
+
     _, bars_with_labels, stats, _ = cv2.connectedComponentsWithStats(bars, None, 8)
     print('\tstat_len: ', len(stats))
     # print('stats2: ', stats)
     elements = stats.copy()
 
-    # Háttér kitörlése
+    # Remove background
     elements = np.delete(elements, 0, 0)
     return elements
-
-
-# todo összevonni legend és többi morph trans-t
-
 
 # TODO delete,  just for funs:
 def imshow_resized(name, img, ratio=0.5):

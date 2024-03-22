@@ -3,6 +3,7 @@ import numpy as np
 import pytesseract
 from pytesseract import Output
 import functions.image_detectations as detects
+from functions.image_edits import img_gray
 
 
 def detect_legend_bars(legend):
@@ -32,7 +33,7 @@ def morph_transform_for_legend(img):
 
     _, labels, stats, _ = cv2.connectedComponentsWithStats(bars, None, 8)
 
-    # Háttér kitörlése
+    # Delete background
     stats = np.delete(stats, 0, 0)
 
     return stats, labels
@@ -105,8 +106,7 @@ def detect_legend_texts(bars_max_x):
         merged_texts[i] = values
         merged_texts[i]["text"] = " ".join(values["text"])
 
-    print("\nmerged_texts: {\n" + "\n".join(
-        "{!r}: {!r}".format(key, values) for key, values in merged_texts.items()) + "}")
+    print("\tmerged_texts: {\n\t\t" + "\n\t\t".join(f"{key}: {values}" for key, values in merged_texts.items()) + "}")
     for key, values in merged_texts.items():
         text = values["text"]
         x = values["x"]
@@ -142,7 +142,7 @@ def merge_bars_with_texts(bars, texts):
                     "text": t_values["text"]
                 }
 
-    print("\nbars_with_texts: {\n" + "\n".join(
-        "{!r}: {!r}".format(key, values) for key, values in bars_with_texts.items()) + "}")
+    print("\tbars_with_texts: {\n\t\t" + "\n\t\t".join(
+        f"{key}: {values}" for key, values in bars_with_texts.items()) + "}")
 
     return bars_with_texts

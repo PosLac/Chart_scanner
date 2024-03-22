@@ -353,11 +353,13 @@ def define_orientation():
     resized = edits.resized_gray
     elements = edits.elements
     bar_hs = []
-    # Legnagyobb oszlop, orientáció
-    max_full = elements[0]
+
+    # Select biggest bar
+    sorted_elements = sorted(elements, key=lambda x: x[4], reverse=True)
+    max_full = sorted_elements[0]
 
     # Rendezés adott tengely szerint
-    if max_full[0] > max_full[2]:
+    if max_full[3] > max_full[1]:
         x_v = 3
         f_or_s = 0
         orientation = 'ybar'
@@ -510,7 +512,7 @@ def scan_legend(legend):
 def merge_colors(bar_stats_with_colors):
     global simple_chart_bar_color
 
-    print(f"\tbar_stats_with_colors: {bar_stats_with_colors}")
+    # print(f"\tbar_stats_with_colors: {bar_stats_with_colors}")
     grouped_bgr_colors = {}
     threshold = 30
     similar_color_key = None
@@ -552,9 +554,8 @@ def merge_colors(bar_stats_with_colors):
             }
             simple_chart_bar_color = color
 
-
-    print("\tgrouped_bgr_colors: {\n" + "\n\t".join(
-        "{!r}: {!r}".format(key, values) for key, values in grouped_bgr_colors.items()) + "}")
+    print("\tgrouped_bgr_colors: {\n\t\t" + "\n\t\t".join(
+        f"{key}: {values}" for key, values in grouped_bgr_colors.items()) + "}")
 
     return grouped_bgr_colors
 

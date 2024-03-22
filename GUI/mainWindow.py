@@ -112,8 +112,8 @@ class MainWindow(QMainWindow):
         if not contains:
             self.input_image_view.clear_scene()
             self.input_image_view.set_image(self.parent_window.output_image_view.image)
-            self.output_image_view.scene().clear()
-            self.output_image_view.pixmap_item = self.output_image_view.scene().addPixmap(QPixmap())
+            self.output_image_view.scene.clear()
+            self.output_image_view.pixmap_item = self.output_image_view.scene.addPixmap(QPixmap())
 
     def legend_has_cropped(self):
         contains = self.contains_legend.isChecked()
@@ -148,8 +148,8 @@ class MainWindow(QMainWindow):
         self.legend_image_bgr = cv2.cvtColor(legend_image_np, cv2.COLOR_BGRA2BGR)
 
         # cv2.imshow("legend_image_bgr", legend_image_bgr)
-        legend_position = self.input_image_view.cropped_pos
-        print(f"legend_position: {legend_position}")
+        legend_position = self.input_image_view.crop_rect
+        print(f"\tLegend_position: {legend_position}")
 
         self.main_work_requested.emit(self.parent_window.file_name, self.legend_image_bgr, legend_position)
 
@@ -181,7 +181,7 @@ class MainWindow(QMainWindow):
         self.edit_window = EditWindow(self)
         self.edit_window.output_image_view.set_image(self.output_image_view.image)
         self.edit_window.legend_image_bgr = self.legend_image_bgr
-        self.edit_window.legend_position = self.input_image_view.cropped_pos
+        self.edit_window.legend_position = self.input_image_view.crop_rect
         self.close()
         self.edit_window.showMaximized()
 

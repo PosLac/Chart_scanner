@@ -21,7 +21,7 @@ class Worker(QObject):
     @pyqtSlot(str, object, object)
     def create_chart(self, name, legend, legend_position):
         print("Creation started")
-        print(f"Contains legend: {legend is not None}")
+        print(f"\tContains legend: {legend is not None}")
 
         self.fname.emit(name)
 
@@ -46,15 +46,11 @@ class Worker(QObject):
         #           self.window.edit_window.ratios, self.window.edit_window.minMax_array,
         #           self.window.edit_window.title_str, self.window.edit_window.title_pos)
         #     print("latex")
-        print("OS SYSTEM")
         os.system('pdf2png.bat tikzdraw 300')
-        print("OS SYSTEM DONE")
         # output_chart = QPixmap("tikzdraw.png")
         # output_chart = output_chart.scaledToWidth(700)
-        print("Worker done")
         self.window.output_image_view.set_generated_image.emit(QPixmap("tikzdraw.png"))
-        print("MainWindow")
-        print("create end")
+        print("Creation finished")
 
     @pyqtSlot(str, object, object, object)
     def update_chart(self, name, color, legend, legend_position):

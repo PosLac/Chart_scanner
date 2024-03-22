@@ -21,7 +21,6 @@ class InputImageViewMouseDrag(ViewWithScene):
         self.currentQRubberBand = None
         self.enable_crop = False
         self.setDragMode(ViewWithScene.RubberBandDrag)
-        self.cropped_pos = None
         self.file_name = ""
 
     def mousePressEvent(self, event):
@@ -39,7 +38,6 @@ class InputImageViewMouseDrag(ViewWithScene):
         if self.currentQRubberBand:
             self.currentQRubberBand.hide()
             current_q_rect = self.currentQRubberBand.geometry()
-            self.cropped_pos = current_q_rect
             self.crop_rect = QRect(self.mapToScene(current_q_rect.topLeft()).toPoint(),
                                    self.mapToScene(current_q_rect.bottomRight()).toPoint()).normalized()
             # self.currentQRubberBand.deleteLater()
