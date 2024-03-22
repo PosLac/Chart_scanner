@@ -3,7 +3,10 @@ import numpy as np
 import pytesseract
 from pytesseract import Output
 import functions.image_detectations as detects
-from functions.image_edits import img_gray
+from functions import image_edits as edits
+
+top_right_point = None
+bottom_left_point = None
 
 
 def detect_legend_bars(legend):
@@ -146,3 +149,37 @@ def merge_bars_with_texts(bars, texts):
         f"{key}: {values}" for key, values in bars_with_texts.items()) + "}")
 
     return bars_with_texts
+
+
+def detect_legend_position():
+    global top_right_point, bottom_left_point
+    _, thresholded = cv2.threshold(edits.img_gray, 220, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(thresholded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+    bounding_rect_contour = None
+
+    min_area = (edits.img_gray.shape[0] * edits.img_gray.shape[1]) * 0.5
+
+    # First element is the bounding contour, so skipped
+    for i in range(1, len(contours)):
+        if cv2.contourArea(contours[i]) >= min_area:
+            bounding_rect_contour = contours[i]
+            break
+
+    top_right_point = bounding_rect_contour[0][0]
+    bottom_left_point = bounding_rect_contour[0][0]
+
+    for point in bounding_rect_contour:
+        point = point[0]
+
+        if point[0] >= top_right_point[0] and point[1] <= top_right_point[1]:
+            top_right_point = point
+
+        if point[0] <= bottom_left_point[0] and point[1] >= bottom_left_point[1]:
+            bottom_left_point = point
+
+    top_right_point = (top_right_point[0] // edits.UPSCALE_RATE, top_right_point[1] // edits.UPSCALE_RATE)
+    print(f"top_right_point: {top_right_point}")
+
+    bottom_left_point = (bottom_left_point[0] // edits.UPSCALE_RATE, bottom_left_point[1] // edits.UPSCALE_RATE)
+    print(f"bottom_left_point: {bottom_left_point}")

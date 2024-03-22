@@ -4,7 +4,7 @@ from pylatex import (Document, TikZ, TikZNode,
                      Axis, Plot, Command, NoEscape)
 
 import functions.image_detectations as detects
-import functions.image_edits as edits
+import functions.detect_legend as legend_detections
 
 
 # def to_latex():
@@ -246,7 +246,7 @@ import functions.image_edits as edits
 
 
 def prepare_data_for_generation(orientation, grouped, ratios, bars_with_data=None, legend_position=None, title=None, title_pos=None):
-    print("\t Prepare data for generation")
+    print("\tPrepare data for generation")
     if bars_with_data is None:
         bars_with_data = {
             0: {'bar_color': [179, 179, 255], 'bar_x': 21, 'bar_y': 18, 'bar_w': 36, 'bar_h': 40, 'text': 'Label-1'},
@@ -357,17 +357,21 @@ def prepare_data_for_update(orientation, grouped, ratios, color, bars_with_data=
 
 
 def prepare_data_for_grouped_chart(update, plot_options_array, orientation, ratios, legend_position, bars_with_texts, define_color_arguments, coordinates_with_options):
+    top_right_point = legend_detections.top_right_point
+    bottom_left_point = legend_detections.bottom_left_point
+
+    width = top_right_point[0] - bottom_left_point[0]
+    height = bottom_left_point[1] - top_right_point[1]
+
     legend_arguments = ""
-    img_width, img_height = edits.img_orig_color.shape[:2]
-    # print(f"img_width, img_height {img_width, img_height}")
-
     legend_top_right_orig = legend_position.topRight()
-    # print(f"legend_top_right {legend_top_right_orig}")
 
-    legend_top_right_calculated = (
-        round(img_width / legend_top_right_orig.x(), 2), 1 - round(legend_top_right_orig.y() / img_height, 2))
+    from_x = min(round(1 - (top_right_point[0] - legend_top_right_orig.x()) / width, 2), 1)
+    from_y = min(round(1 - (legend_top_right_orig.y() - top_right_point[1]) / height, 2), 1)
 
-    plot_options_array.append("legend style={at={" + str(legend_top_right_calculated) + "}}")
+    legend_top_right = from_x, from_y
+
+    plot_options_array.append("legend style={at={" + str(legend_top_right) + "}}")
     print(f"\tplot_options: {plot_options_array}")
 
     if orientation == 'xbar':

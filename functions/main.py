@@ -1,6 +1,8 @@
 from functions import image_detectations as detects
 from functions import image_edits as edits
 from functions import to_latex
+import functions.detect_legend as legend_detections
+
 
 
 def main(fname, title_pos, grouped, bars_with_data=None, legend_position=None):
@@ -44,6 +46,8 @@ def main(fname, title_pos, grouped, bars_with_data=None, legend_position=None):
     if not grouped:
         colors = detects.detect_colors(edits.resized_color, edits.elements, edits.bars_with_labels)
         detects.bars_with_data = detects.merge_colors(colors)
+    else:
+        legend_detections.detect_legend_position()
 
     # to_latex.latex(False, detects.orientation, detects.ratios, title_pos=title_pos)
     # to_latex.prepare_data_for_generation(False, detects.orientation, grouped, detects.ratios, bars_with_texts, legend_position) # todo
