@@ -172,8 +172,6 @@ def morphological_transform(img, legend_position) -> np.ndarray:
         bars[legend_start_y:legend_end_y, legend_start_x:legend_end_x] = 0
 
     _, bars_with_labels, stats, _ = cv2.connectedComponentsWithStats(bars, None, 8)
-    print('\tstat_len: ', len(stats))
-    # print('stats2: ', stats)
     elements = stats.copy()
 
     # Remove background

@@ -46,13 +46,13 @@ def main(fname, title_pos, grouped, legend_bars_data=None, legend_position=None)
 
     if grouped:
         legend_detections.detect_legend_position()
-        colors = detects.detect_colors(edits.resized_color, edits.elements, edits.bars_with_labels)
-        bars_with_data = detects.merge_grouped_chart_bar_colors(colors)
+        bars_with_colors = detects.detect_colors(edits.resized_color, edits.elements, edits.bars_with_labels)
+        bars_with_data = detects.merge_grouped_chart_bar_colors(bars_with_colors)
         detects.define_ratios(grouped, bars_with_data)
     else:
-        colors = detects.detect_colors(edits.resized_color, edits.elements, edits.bars_with_labels)
-        detects.merge_simple_chart_bar_colors(colors)
-        detects.define_ratios(grouped)
+        simple_bars_with_colors_array = detects.detect_colors(edits.resized_color, edits.elements, edits.bars_with_labels)
+        detects.merge_simple_chart_bar_colors(simple_bars_with_colors_array)
+        detects.define_ratios(grouped, simple_bars_with_colors_array)
 
     # to_latex.latex(False, detects.orientation, detects.ratios, title_pos=title_pos)
     # to_latex.prepare_data_for_generation(False, detects.orientation, grouped, detects.ratios, bars_with_texts, legend_position) # todo

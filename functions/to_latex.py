@@ -259,10 +259,8 @@ def prepare_data_for_generation(orientation, grouped, ratios, bars_with_data=Non
     # set options to title above the chart
     plot_options_array = prepare_title_above(False, plot_options_array, title, title_pos)
 
-    if orientation == 'xbar':
-        max_number = detects.r_new_numbers[0][7]
-    else:
-        max_number = detects.c_new_numbers[0][7]
+    max_number = detects.tick_number_of_longest_bar
+    print(f"\tmax_number: {max_number}")
 
     # set options for grouped chart
     if grouped:
@@ -295,7 +293,6 @@ def prepare_data_for_generation(orientation, grouped, ratios, bars_with_data=Non
         #     define_color_arguments.append(["color" + str(key + 1), "RGB", color_str])
 
     print(f"\tratios: {ratios}")
-    print(f"\tlegend_arguments: {legend_arguments}")
     print(f"\tdefine_color_arguments: {define_color_arguments}")
     print(f"\tgroup_coordinates: {coordinates_with_options}")
 

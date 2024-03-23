@@ -28,6 +28,8 @@ binary = None
 legend_orig = None
 bars_with_data = None
 simple_chart_bar_color = None
+tick_number_of_longest_bar = None
+
 
 # Fill two arrays with values from each x and y coordinate axes
 def isolate_x_y() -> None:
@@ -331,7 +333,7 @@ def detect_title(has_title):
 
     title_img = 255 - title_img
     chart_title = pytesseract.pytesseract.image_to_string(title_img, config=config_title)
-    print(f"title: {chart_title}")
+    print(f"\t Detected title: {chart_title}")
     return chart_title
 
 
@@ -393,7 +395,7 @@ def define_orientation():
     # cv2.imwrite('bars_'+orientation+'.png', bars)
 
 
-def define_ratios(grouped, bars_with_data=None):
+def define_ratios(grouped, bars_with_data):
     global bar_hs, ratios, orientation, r_new_numbers, c_new_numbers, mean
 
     if grouped:
@@ -431,9 +433,54 @@ def define_ratios(grouped, bars_with_data=None):
 
     else:
         if orientation == 'xbar':
-            ratios = np.round(bar_hs / (r_new_numbers[0][5] - r_new_numbers[-1][5]), 2)
+            longest_bar = find_closest_tick_number(bars_with_data, r_new_numbers, True)
+            ratios = np.round(bar_hs / longest_bar[2], 2)
+
         elif orientation == 'ybar':
-            ratios = np.round(bar_hs / (mean - c_new_numbers[0][6]), 2)
+            longest_bar = find_closest_tick_number(bars_with_data, c_new_numbers, False)
+            ratios = np.round(bar_hs / longest_bar[3], 2)
+            # ratios = np.round(bar_hs / (mean - c_new_numbers[0][6]), 2)
+
+
+def find_closest_tick_number(bars_with_data, tick_data, horizontal):
+    global tick_number_of_longest_bar
+
+    number_index = 7
+
+    # Set indexes
+    if horizontal:
+        x_y_index = 0
+        w_h_index = 2
+        centoid_index = 5
+    else:
+        x_y_index = 1
+        w_h_index = 3
+        centoid_index = 6
+
+    longest_bar = bars_with_data[0][0]
+
+    # Find the longest bar
+    for bar_data in bars_with_data:
+        if bar_data[0][w_h_index] >= longest_bar[w_h_index]:
+            longest_bar = bar_data[0]
+
+    if horizontal:
+        bar_end = longest_bar[x_y_index] + longest_bar[w_h_index]
+    else:
+        bar_end = longest_bar[x_y_index]
+
+    closest_number_data = tick_data[0]
+
+    # Find the closest tick
+    for number_data in tick_data:
+        # print(f"\tnumber_data (x, y):{number_data[:2]},\t(width, height):{number_data[2:4]},centoid_x:{number_data[5]},\tpixels:{number_data[6]},\tnumber: {number_data[7]}")
+        if abs(bar_end - number_data[centoid_index]) <= abs(bar_end - closest_number_data[centoid_index]):
+            closest_number_data = number_data
+
+    tick_number_of_longest_bar = closest_number_data[number_index]
+
+    return longest_bar
+
 
 
 def detect_colors(img, bar_stats, bars_labels):
