@@ -36,7 +36,7 @@ class EditWindow(QMainWindow):
         self.color_picker_button = self.findChild(QPushButton, "color_picker_button")
         self.color_picker_button.clicked.connect(self.open_color_picker)
         self.color_label = self.findChild(QLabel, "color_label")
-        self.color_label.setStyleSheet(f"background: rgb({', '.join(map(str, self.simple_chart_bar_color))})")
+        self.color_label.setStyleSheet(f"background: rgb({', '.join(map(str, self.simple_chart_bar_color))})")  #TODO set colors for grouped charts too
 
         # title_layout
         self.above = self.findChild(QRadioButton, "above")

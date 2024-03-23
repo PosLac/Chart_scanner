@@ -4,8 +4,7 @@ from functions import to_latex
 import functions.detect_legend as legend_detections
 
 
-
-def main(fname, title_pos, grouped, bars_with_data=None, legend_position=None):
+def main(fname, title_pos, grouped, legend_bars_data=None, legend_position=None):
     """
 
     Args:
@@ -43,17 +42,24 @@ def main(fname, title_pos, grouped, bars_with_data=None, legend_position=None):
 
     detects.define_orientation()
     print("Orientation done")
-    if not grouped:
-        colors = detects.detect_colors(edits.resized_color, edits.elements, edits.bars_with_labels)
-        detects.bars_with_data = detects.merge_colors(colors)
-    else:
+
+
+    if grouped:
         legend_detections.detect_legend_position()
-        detects.ratios = [[0, 0.75, 0.5, 0.25], [0.25, 1, 0.25, 0.5]]
+        colors = detects.detect_colors(edits.resized_color, edits.elements, edits.bars_with_labels)
+        bars_with_data = detects.merge_grouped_chart_bar_colors(colors)
+        detects.define_ratios(grouped, bars_with_data)
+    else:
+        colors = detects.detect_colors(edits.resized_color, edits.elements, edits.bars_with_labels)
+        detects.merge_simple_chart_bar_colors(colors)
+        detects.define_ratios(grouped)
 
     # to_latex.latex(False, detects.orientation, detects.ratios, title_pos=title_pos)
     # to_latex.prepare_data_for_generation(False, detects.orientation, grouped, detects.ratios, bars_with_texts, legend_position) # todo
     # detects.ratios = [[0, 0.75, 0.5, 0.25], [0.25, 1, 0.25, 0.5]]
-    to_latex.prepare_data_for_generation(detects.orientation, grouped, detects.ratios, detects.bars_with_data, legend_position, title_pos=title_pos)  # todo
+    # detects.orientation = "ybar"
+    to_latex.prepare_data_for_generation(detects.orientation, grouped, detects.ratios, legend_bars_data,
+                                         legend_position, title_pos=title_pos)
     print("Main completed")
     # todo destroyallwindow
     # cv2.destroyAllWindows()

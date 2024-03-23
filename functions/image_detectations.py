@@ -17,8 +17,10 @@ ratios = None
 new_numbers = None
 orientation = None
 chart_title = None
-c_new_numbers = []
+r_final = []
+c_final = []
 r_new_numbers = []
+c_new_numbers = []
 col_nums = []
 row_nums = []
 resized_gray = None
@@ -46,7 +48,8 @@ def isolate_x_y() -> None:
     # searching in the left third for y-axis and bottom third for x-axis of the picture
     row_third = binary.shape[0] / 3
     col_third = binary.shape[1] / 3
-
+    row_nums = []
+    col_nums = []
     for i in range(1, number_of_components):
         if stats[i][0] < row_third:
             col_nums.append(stats[i])
@@ -272,7 +275,7 @@ def connected_components():
 
 
 def row_int():
-    global numbers_str, xplus, yplus, c_numbers_str, r_numbers_str
+    global numbers_str, xplus, yplus, c_numbers_str, r_numbers_str, r_new_numbers, c_new_numbers
     numbers_str = np.concatenate((c_numbers_str, r_numbers_str), axis=0)
 
     has_none = False
@@ -373,17 +376,13 @@ def define_orientation():
 
     print(f"\t{'Horizontal' if orientation == 'xbar' else 'Vertical'} chart detected")
 
-    for element in elements:
-        if element[x_v] > max_full[x_v]:
-            max_full = element
+    # for element in elements:
+    #     if element[x_v] > max_full[x_v]:
+    #         max_full = element
     elements = sorted(elements, key=lambda x: x[f_or_s])
     for element in elements:
         bar_hs.append(element[x_v])
     max_bar = max(bar_hs)
-    if orientation == 'xbar':
-        ratios = np.round(bar_hs / (r_new_numbers[0][5] - r_new_numbers[-1][5]), 2)
-    elif orientation == 'ybar':
-        ratios = np.round(bar_hs / (mean - c_new_numbers[0][6]), 2)
 
     # Visszaskálázás
     percent = 2
@@ -392,6 +391,49 @@ def define_orientation():
     resized = cv2.resize(resized, (width, height))
     cv2.imwrite('rects_' + orientation + '.png', resized)
     # cv2.imwrite('bars_'+orientation+'.png', bars)
+
+
+def define_ratios(grouped, bars_with_data=None):
+    global bar_hs, ratios, orientation, r_new_numbers, c_new_numbers, mean
+
+    if grouped:
+        if orientation == 'xbar':
+            # Search the longest bar and save the width
+            max_bar_width = 0
+            for key, values in bars_with_data.items():
+                for bar_data in values["bars"]:
+                    max_bar_width = max(bar_data["w"], max_bar_width)
+
+            # Add the current bar width / the longest bar width
+            for key, values in bars_with_data.items():
+                for bar_data in values["bars"]:
+                    bar_data["ratio"] = round(bar_data["w"] / max_bar_width, 2)
+
+            print("\tdefine_ratios bars_with_data: {\n\t\t" + "\n\t\t".join(
+                f"{key}: {values}" for key, values in bars_with_data.items()) + "}")
+
+        elif orientation == 'ybar':
+            # ratios = np.round(bar_hs / (mean - c_new_numbers[0][6]), 2)
+
+            # Search the highest bar and save the height
+            max_bar_height = 0
+            for key, values in bars_with_data.items():
+                for bar_data in values["bars"]:
+                    max_bar_height = max(bar_data["h"], max_bar_height)
+
+            # Add the current bar height / the highest bar height
+            for key, values in bars_with_data.items():
+                for bar_data in values["bars"]:
+                    bar_data["ratio"] = round(bar_data["h"] / max_bar_height, 2)
+
+            print("\tdefine_ratios bars_with_data: {\n\t\t" + "\n\t\t".join(
+                f"{key}: {values}" for key, values in bars_with_data.items()) + "}")
+
+    else:
+        if orientation == 'xbar':
+            ratios = np.round(bar_hs / (r_new_numbers[0][5] - r_new_numbers[-1][5]), 2)
+        elif orientation == 'ybar':
+            ratios = np.round(bar_hs / (mean - c_new_numbers[0][6]), 2)
 
 
 def detect_colors(img, bar_stats, bars_labels):
@@ -421,7 +463,6 @@ def detect_colors(img, bar_stats, bars_labels):
     return bars_with_colors
 
 
-# TODO kivenni jelmagyarázatban lévő barokat (jelmagyarázat egérrel kijelölni)
 def detect_bar_color(resized_color, bars_stats, bars_labels, label):
     """
     Detects the dominant color of a bar
@@ -483,7 +524,7 @@ def scan_legend(legend):
     if legend is not None:
         legend_orig = legend.copy()
         bar_stats_with_colors = legend_detections.detect_legend_bars(legend)
-        colors = merge_colors(bar_stats_with_colors)
+        colors = merge_legend_bar_colors(bar_stats_with_colors)
 
         bars_max_x = 0
 
@@ -509,9 +550,7 @@ def scan_legend(legend):
         return bars_with_texts
 
 
-def merge_colors(bar_stats_with_colors):
-    global simple_chart_bar_color
-
+def merge_legend_bar_colors(bar_stats_with_colors):
     # print(f"\tbar_stats_with_colors: {bar_stats_with_colors}")
     grouped_bgr_colors = {}
     threshold = 30
@@ -521,7 +560,11 @@ def merge_colors(bar_stats_with_colors):
         # print(f"{i}. pos: {pos}, color: {color}")
         for key, values in grouped_bgr_colors.items():
             norm = int(np.linalg.norm(np.concatenate(cv2.subtract(values['color'], color, 1))))
-            similar_color_key = key if norm <= threshold else None
+            if norm <= threshold:
+                similar_color_key = key
+                break
+            else:
+                similar_color_key = None
             # print(f"norm: {values['color']} - {color} = {norm}, {key}")
 
         x = pos[0]
@@ -552,10 +595,94 @@ def merge_colors(bar_stats_with_colors):
                 "w": w,
                 "h": h
             }
-            simple_chart_bar_color = color
 
-    print("\tgrouped_bgr_colors: {\n\t\t" + "\n\t\t".join(
+    print("\tgrouped_legend_bgr_colors: {\n\t\t" + "\n\t\t".join(
         f"{key}: {values}" for key, values in grouped_bgr_colors.items()) + "}")
 
     return grouped_bgr_colors
 
+
+def merge_simple_chart_bar_colors(bar_stats_with_colors):
+    global simple_chart_bar_color
+
+    # print(f"\tbar_stats_with_colors: {bar_stats_with_colors}")
+    grouped_bgr_colors = {}
+    threshold = 30
+    similar_color_key = None
+
+    for i, [pos, color] in enumerate(bar_stats_with_colors):
+        # print(f"{i}. pos: {pos}, color: {color}")
+        for key, values in grouped_bgr_colors.items():
+            norm = int(np.linalg.norm(np.concatenate(cv2.subtract(values['color'], color, 1))))
+            if norm <= threshold:
+                similar_color_key = key
+                break
+            else:
+                similar_color_key = None
+            # print(f"norm: {values['color']} - {color} = {norm}, {key}")
+
+        if similar_color_key is not None:
+            average = np.array(np.average([grouped_bgr_colors[similar_color_key]['color'], color], axis=0),
+                               np.uint8)
+            # print(f"{grouped_bgr_colors[similar_color_key]['color']} and {color} = {average}")
+            simple_chart_bar_color = average
+
+        else:
+            simple_chart_bar_color = color
+
+    print(f"\tsimple_chart_bar_color: {simple_chart_bar_color}")
+
+
+def merge_grouped_chart_bar_colors(bar_stats_with_data):
+    grouped_bars = {}
+    threshold = 30
+    similar_color_key = None
+
+    for i, [pos, color] in enumerate(bar_stats_with_data):
+        # print(f"{i}. pos: {pos}, color: {color}")
+        for key, values in grouped_bars.items():
+            norm = int(np.linalg.norm(np.concatenate(cv2.subtract(values['color'], color, 1))))
+            if norm <= threshold:
+                similar_color_key = key
+                break
+            else:
+                similar_color_key = None
+            # print(f"norm: {values['color']} - {color} = {norm}, {key}")
+
+        x = pos[0]
+        y = pos[1]
+        w = pos[2]
+        h = pos[3]
+
+        # Similar color
+        if similar_color_key is not None:
+            grouped_bars[similar_color_key]["bars"].append({
+                "x": x,
+                "y": y,
+                "w": w,
+                "h": h
+            })
+
+            average = np.array(np.average([grouped_bars[similar_color_key]['color'], color], axis=0),
+                               np.uint8)
+            # print(f"{grouped_bgr_colors[similar_color_key]['color']} and {color} = {average}")
+            grouped_bars[similar_color_key]["color"] = average
+
+        # New color
+        else:
+            grouped_bars[len(grouped_bars)] = {
+                "color": color,
+                "bars": [
+                    {
+                        "x": x,
+                        "y": y,
+                        "w": w,
+                        "h": h
+                    }
+                ]
+            }
+
+    print("\tgrouped_bars: {\n\t\t" + "\n\t\t".join(
+        f"{key}: {values}" for key, values in grouped_bars.items()) + "}")
+
+    return grouped_bars

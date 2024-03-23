@@ -137,7 +137,7 @@ def merge_bars_with_texts(bars, texts):
             if abs(text_bottom - bar_bottom) <= threshold:
                 # print(f"text_bottom: {text_bottom}")
                 bars_with_texts[key] = {
-                    "bar_color": values["color"],
+                    "color": values["color"],
                     "bar_x": values["x"],
                     "bar_y": values["y"],
                     "bar_w": values["w"],

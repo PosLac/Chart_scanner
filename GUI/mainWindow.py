@@ -23,6 +23,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self, parent_window):
         super(MainWindow, self).__init__()
+        self.legend_bars_data = None
         self.legend_pixmap = None
         self.legend_image_bgr = None
         self.parent_window = parent_window
@@ -198,6 +199,7 @@ class MainWindow(QMainWindow):
         self.edit_window.legend_image_bgr = self.legend_image_bgr
         self.edit_window.legend_position = self.input_image_view.crop_rect
         self.edit_window.bars_with_data = self.bars_with_data
+        self.edit_window.legend_bars_data = self.legend_bars_data
         self.close()
         self.edit_window.showMaximized()
 
