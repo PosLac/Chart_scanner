@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QLabel
 
 class ViewWithScene(QGraphicsView):
     set_generated_image = pyqtSignal(QPixmap)
-    image_setting_completed = pyqtSignal()
+    # image_setting_completed = pyqtSignal()
     start_spinner_signal = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
@@ -38,11 +38,11 @@ class ViewWithScene(QGraphicsView):
 
     def set_image(self, img):
         pixmap = img
-        if type(img) == np.ndarray:
-            height, width, _ = img.shape
-            bytesPerLine = 3 * width
-            pixmap = QImage(img.data, width, height, bytesPerLine, QImage.Format_RGB888)
-            pixmap = QPixmap.fromImage(pixmap)
+        # if type(img) == np.ndarray:
+        #     height, width, _ = img.shape
+        #     bytesPerLine = 3 * width
+        #     pixmap = QImage(img.data, width, height, bytesPerLine, QImage.Format_RGB888)
+        #     pixmap = QPixmap.fromImage(pixmap)
 
         w = pixmap.width()
         h = pixmap.height()
@@ -73,4 +73,4 @@ class ViewWithScene(QGraphicsView):
         self.image = pixmap
         self.pixmap_item.setPixmap(pixmap)
         self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
-        self.image_setting_completed.emit()
+        # self.image_setting_completed.emit()

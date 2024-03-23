@@ -8,14 +8,14 @@ from viewWithScene import ViewWithScene
 
 
 class InputImageViewMouseDrag(ViewWithScene):
-    cropped = pyqtSignal(np.ndarray)
+    cropped = pyqtSignal(QPixmap)
 
     # def __init__(self):
     #     super(InputImageView, self).__init__()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.crop_rect = QRect
+        self.crop_rect = None
         self.img = None
         self.originQPoint = None
         self.currentQRubberBand = None
@@ -42,20 +42,22 @@ class InputImageViewMouseDrag(ViewWithScene):
                                    self.mapToScene(current_q_rect.bottomRight()).toPoint()).normalized()
             # self.currentQRubberBand.deleteLater()
             crop_q_pixmap = self.pixmap_item.pixmap().copy(self.crop_rect)
-            self.crop_image(crop_q_pixmap)
+            # self.crop_image(crop_q_pixmap)
+            self.cropped.emit(crop_q_pixmap)
 
-    def crop_image(self, qimg):
-        qimage = qimg.toImage()
-        width, height = qimage.width(), qimage.height()
-        ptr = qimage.bits()
-        ptr.setsize(qimage.byteCount())
-        arr = bytearray(ptr)
-
-        img = cv2.cvtColor(
-            np.array(arr).reshape(height, width, 4),
-            cv2.COLOR_RGBA2BGR
-        )
-        self.cropped.emit(img)
+    # Comment temporary, using QPixmap instead of np.ndarray
+    # def crop_image(self, qimg):
+        # qimage = qimg.toImage()
+        # width, height = qimage.width(), qimage.height()
+        # ptr = qimage.bits()
+        # ptr.setsize(qimage.byteCount())
+        # arr = bytearray(ptr)
+        #
+        # img = cv2.cvtColor(
+        #     np.array(arr).reshape(height, width, 4),
+        #     cv2.COLOR_RGBA2BGR
+        # )
+        # self.cropped.emit(qimg)
 
     def clear_scene(self):
         if len(self.scene.items()) > 1:

@@ -48,6 +48,7 @@ def main(fname, title_pos, grouped, bars_with_data=None, legend_position=None):
         detects.bars_with_data = detects.merge_colors(colors)
     else:
         legend_detections.detect_legend_position()
+        detects.ratios = [[0, 0.75, 0.5, 0.25], [0.25, 1, 0.25, 0.5]]
 
     # to_latex.latex(False, detects.orientation, detects.ratios, title_pos=title_pos)
     # to_latex.prepare_data_for_generation(False, detects.orientation, grouped, detects.ratios, bars_with_texts, legend_position) # todo

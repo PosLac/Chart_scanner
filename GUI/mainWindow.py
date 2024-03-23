@@ -23,11 +23,13 @@ class MainWindow(QMainWindow):
 
     def __init__(self, parent_window):
         super(MainWindow, self).__init__()
+        self.legend_pixmap = None
         self.legend_image_bgr = None
         self.parent_window = parent_window
 
         uic.loadUi("mainWindow.ui", self)
         self.edit_window = None
+        self.bars_with_data = None
 
         # input_layout
         self.back_button = self.findChild(QPushButton, "back_button")
@@ -43,6 +45,7 @@ class MainWindow(QMainWindow):
         self.crop_legend_label.setHidden(True)
         self.contains_legend = self.findChild(QCheckBox, "contains_legend")
         self.contains_legend.stateChanged.connect(self.contains_legend_changed)
+        self.cropped_legend = self.findChild(QLabel, "cropped_legend")
         # self.jump_to_crop_legend.setHidden(True)
         # self.jump_to_crop_legend = self.findChild(QPushButton, "jump_to_crop_legend")
         # self.contains_legend.stateChanged.connect(lambda: self.jump_to_crop_legend.setHidden(not self.contains_legend.isChecked()))
@@ -62,7 +65,7 @@ class MainWindow(QMainWindow):
         self.output_layout = self.findChild(QGridLayout, "output_layout")
         self.output_image_view = self.findChild(ViewWithScene, "output_view")
         self.output_image_view.setScene(self.output_image_view.scene)
-        self.input_image_view.cropped.connect(self.output_image_view.set_image)
+        # self.input_image_view.cropped.connect(self.output_image_view.set_image)
         self.input_image_view.cropped.connect(self.legend_has_cropped)
         self.output_layout.addWidget(self.output_image_view, 1, 0, alignment=Qt.AlignHCenter)
 
@@ -91,9 +94,9 @@ class MainWindow(QMainWindow):
         self.generation_completed.connect(lambda: self.export_edit_group.setHidden(False))
         self.worker_thread.start()
 
-        self.read_legend_button = self.findChild(QPushButton, "read_legend")
-        self.read_legend_button.setHidden(True)
-        self.read_legend_button.clicked.connect(self.scan_legend)
+        # self.read_legend_button = self.findChild(QPushButton, "read_legend")
+        # self.read_legend_button.setHidden(True)
+        # self.read_legend_button.clicked.connect(self.scan_legend)
 
         self.showMaximized()
 
@@ -105,20 +108,28 @@ class MainWindow(QMainWindow):
     def contains_legend_changed(self):
         contains = self.contains_legend.isChecked()
         self.crop_legend_label.setHidden(not contains)
+        self.cropped_legend.setHidden(not contains)
         self.input_image_view.enable_crop = contains
-        self.output_title.setText("Jelmagyarázat" if contains else "Beolvasott diagram")
-        self.read_legend_button.setHidden(True)
+        # self.output_title.setText("Jelmagyarázat" if contains else "Beolvasott diagram")
+        # self.read_legend_button.setHidden(True)
 
         if not contains:
             self.input_image_view.clear_scene()
             self.input_image_view.set_image(self.parent_window.output_image_view.image)
-            self.output_image_view.scene.clear()
-            self.output_image_view.pixmap_item = self.output_image_view.scene.addPixmap(QPixmap())
+            # self.output_image_view.scene.clear()
+            # self.output_image_view.pixmap_item = self.output_image_view.scene.addPixmap(QPixmap())
+            self.cropped_legend.setPixmap(QPixmap())
+            self.crop_legend_label.setText("Jelölje ki a diagramon a jelmagyarázatot tartalmazó részt")
+            self.input_image_view.crop_rect = None
 
-    def legend_has_cropped(self):
+    def legend_has_cropped(self, pixmap):
         contains = self.contains_legend.isChecked()
         if contains:
-            self.read_legend_button.setHidden(False)
+            # self.read_legend_button.setHidden(False)
+            self.crop_legend_label.setText("Kijelölt jelmagyarázat:")
+            self.cropped_legend.setHidden(False)
+            self.cropped_legend.setPixmap(pixmap)
+            self.legend_pixmap = pixmap
 
     # def set_legend_data(self):
     #     self.output_image_view.set_image(self.input_image_view.result)
@@ -138,7 +149,7 @@ class MainWindow(QMainWindow):
     #     self.work_requested.emit(self.parent_window.file_name, False, legend_image_bgr, legend_position)
 
     def scan_legend(self):
-        legend_image = self.output_image_view.image.toImage()
+        legend_image = self.legend_pixmap.toImage()
         ptr = legend_image.bits()
         ptr.setsize(legend_image.byteCount())
         legend_image_np = np.frombuffer(ptr, np.uint8).reshape(legend_image.height(), legend_image.width(), 4)
@@ -159,6 +170,7 @@ class MainWindow(QMainWindow):
 
     def scan_chart(self):
         self.set_loading_sceen()
+
         if self.above.isChecked():
             self.title_pos = 1
         elif self.below.isChecked():
@@ -167,8 +179,11 @@ class MainWindow(QMainWindow):
             self.title_pos = 0
 
         print(f"File name: {self.parent_window.file_name}")
-        self.main_work_requested.emit(self.parent_window.file_name, None, None)
-        # self.spinner.start()
+
+        if self.input_image_view.crop_rect:
+            self.scan_legend()
+        else:
+            self.main_work_requested.emit(self.parent_window.file_name, None, None)
 
     def export(self, type):
         input_file = "tikzdraw." + type
@@ -182,6 +197,7 @@ class MainWindow(QMainWindow):
         self.edit_window.output_image_view.set_image(self.output_image_view.image)
         self.edit_window.legend_image_bgr = self.legend_image_bgr
         self.edit_window.legend_position = self.input_image_view.crop_rect
+        self.edit_window.bars_with_data = self.bars_with_data
         self.close()
         self.edit_window.showMaximized()
 

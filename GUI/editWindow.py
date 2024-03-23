@@ -30,6 +30,7 @@ class EditWindow(QMainWindow):
         self.title_str = ""
         self.title_pos = 0
         self.update_bool = False
+        self.bars_with_data = None
 
         # color_layout
         self.color_picker_button = self.findChild(QPushButton, "color_picker_button")

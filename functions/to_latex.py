@@ -304,7 +304,7 @@ def prepare_data_for_generation(orientation, grouped, ratios, bars_with_data=Non
                    title_pos)
 
 
-def prepare_data_for_update(orientation, grouped, ratios, color, bars_with_data=None, legend_position=None, min_max_array=None, title=None, title_pos=None):
+def prepare_data_for_update(orientation, grouped, updated_ratios, color, bars_with_data=None, legend_position=None, min_max_array=None, title=None, title_pos=None):
     legend_arguments = ""
     plot_options_array = [orientation, 'name=mygraph']
     define_color_arguments = []
@@ -322,31 +322,31 @@ def prepare_data_for_update(orientation, grouped, ratios, color, bars_with_data=
 
     # set options for grouped chart
     if grouped:
-        ratios, plot_options_array, define_color_arguments, legend_arguments = prepare_data_for_grouped_chart(True,
-                                                                                                              plot_options_array,
-                                                                                                              orientation,
-                                                                                                              ratios,
-                                                                                                              legend_position,
-                                                                                                              bars_with_data,
-                                                                                                              define_color_arguments,
-                                                                                                              coordinates_with_options)
+        updated_ratios, plot_options_array, define_color_arguments, legend_arguments = prepare_data_for_grouped_chart(True,
+                                                                                                                      plot_options_array,
+                                                                                                                      orientation,
+                                                                                                                      updated_ratios,
+                                                                                                                      legend_position,
+                                                                                                                      bars_with_data,
+                                                                                                                      define_color_arguments,
+                                                                                                                      coordinates_with_options)
 
     else:
         if orientation == 'xbar':
-            ratios = np.flip(ratios)
+            updated_ratios = np.flip(updated_ratios)
 
         coordinates = []
-        for bar_index in range(len(ratios)):
+        for bar_index in range(len(updated_ratios)):
             if orientation == "xbar":
-                coordinates.append((round(ratios[bar_index], 2), bar_index + 1))
+                coordinates.append((round(updated_ratios[bar_index], 2), bar_index + 1))
             else:
-                coordinates.append((bar_index + 1, round(ratios[bar_index], 2)))
+                coordinates.append((bar_index + 1, round(updated_ratios[bar_index], 2)))
         coordinates_with_options.append((coordinates, f'fill=color{1}'))
 
         color_str = ", ".join(map(str, color))
         define_color_arguments.append(["color1", "RGB", color_str])
 
-    print(f"\tratios: {ratios}")
+    print(f"\tratios: {updated_ratios}")
     print(f"\tdefine_color_arguments: {define_color_arguments}")
     print(f"\tgroup_coordinates: {coordinates_with_options}")
 
@@ -356,7 +356,8 @@ def prepare_data_for_update(orientation, grouped, ratios, color, bars_with_data=
                    title_pos)
 
 
-def prepare_data_for_grouped_chart(update, plot_options_array, orientation, ratios, legend_position, bars_with_texts, define_color_arguments, coordinates_with_options):
+def prepare_data_for_grouped_chart(update, plot_options_array, orientation, ratios, legend_position, bars_with_data, define_color_arguments, coordinates_with_options):
+    ratios = [[0, 0.75, 0.5, 0.25], [0.25, 1, 0.25, 0.5]]
     top_right_point = legend_detections.top_right_point
     bottom_left_point = legend_detections.bottom_left_point
 
@@ -380,10 +381,10 @@ def prepare_data_for_grouped_chart(update, plot_options_array, orientation, rati
             if update:
                 ratios[i] *= detects.r_new_numbers[0][7]
 
-    for key, values in bars_with_texts.items():
+    for key, values in bars_with_data.items():
         color_str = ", ".join(map(str, values["bar_color"]))
         define_color_arguments.append(["color" + str(key + 1), "RGB", color_str])
-        legend_arguments = ", ".join(value["text"] for key, value in bars_with_texts.items())
+        legend_arguments = ", ".join(value["text"] for key, value in bars_with_data.items())
 
     print(f"\tlegend_arguments: {legend_arguments}")
 
