@@ -32,7 +32,10 @@ def read_img(file_name: str) -> np.ndarray:
     """
     global img_gray, img_color, img_orig_gray, img_orig_color
 
-    img_orig_color = cv2.imread(file_name, cv2.IMREAD_COLOR)
+    with open(file_name, 'rb') as file:
+        buffer = np.asarray(bytearray(file.read()), dtype=np.uint8)
+        img_orig_color = cv2.imdecode(buffer, cv2.IMREAD_COLOR)
+
     img_orig_gray = cv2.cvtColor(img_orig_color, cv2.COLOR_BGR2GRAY)
     img_gray = img_orig_gray.copy()
     img_color = img_orig_color.copy()
@@ -83,7 +86,7 @@ def threshold() -> np.ndarray:
     global binary, hugh
     binary = np.uint8(np.ndarray(img_gray.shape))
     binary.fill(0)
-    binary[img_gray < 220] = 255
+    binary[img_gray < 200] = 255
     # imshow_resized("img_gray", img_gray, 0.5)
     # imshow_resized("binary", binary, 0.5)
     hugh = cv2.Canny(img_gray, 50, 200, None, 3)
