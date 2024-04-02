@@ -22,6 +22,12 @@
         <property name="enabled">
          <bool>true</bool>
         </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="font">
          <font>
           <pointsize>12</pointsize>
@@ -145,51 +151,139 @@
      </spacer>
     </item>
     <item row="0" column="2">
-     <layout class="QGridLayout" name="edit_layout" rowstretch="0,0,0,0,0,0,0">
-      <item row="4" column="0">
-       <layout class="QGridLayout" name="color_layout">
-        <item row="0" column="1" alignment="Qt::AlignLeft">
-         <widget class="QPushButton" name="color_picker_button">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">padding: 5px</string>
-          </property>
-          <property name="text">
-           <string>Oszlopok színének kiválasztása</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0" alignment="Qt::AlignRight">
-         <widget class="QLabel" name="color_label">
-          <property name="minimumSize">
-           <size>
-            <width>30</width>
-            <height>30</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>30</width>
-            <height>30</height>
-           </size>
-          </property>
-          <property name="autoFillBackground">
-           <bool>false</bool>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background: rgb(240, 240, 240);
-border: 1px solid black;</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-       </layout>
+     <layout class="QGridLayout" name="edit_layout" rowstretch="0,0,0,0,0,0,0,0">
+      <item row="1" column="0">
+       <widget class="QGroupBox" name="title_layout">
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+          <italic>false</italic>
+          <underline>false</underline>
+         </font>
+        </property>
+        <property name="title">
+         <string/>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_5">
+         <item row="3" column="0" colspan="2">
+          <widget class="QRadioButton" name="above">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <italic>false</italic>
+             <underline>false</underline>
+            </font>
+           </property>
+           <property name="text">
+            <string>Diagram felett</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0" colspan="2">
+          <widget class="QRadioButton" name="below">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <italic>false</italic>
+             <underline>false</underline>
+            </font>
+           </property>
+           <property name="text">
+            <string>Diagram alatt</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1" alignment="Qt::AlignLeft|Qt::AlignVCenter">
+          <widget class="QLineEdit" name="title_text">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>1400</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <italic>false</italic>
+             <underline>false</underline>
+            </font>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0" colspan="2">
+          <widget class="QRadioButton" name="no_title">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <italic>false</italic>
+             <underline>false</underline>
+            </font>
+           </property>
+           <property name="text">
+            <string>Nincs cím</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="title_label">
+           <property name="maximumSize">
+            <size>
+             <width>140</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <italic>false</italic>
+             <underline>false</underline>
+            </font>
+           </property>
+           <property name="text">
+            <string>Diagramcím: </string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <spacer name="verticalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="2" column="0">
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="5" column="0">
+       <layout class="QGridLayout" name="color_layout"/>
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="input_title">
@@ -228,19 +322,6 @@ border: 1px solid black;</string>
          <set>Qt::AlignCenter</set>
         </property>
        </widget>
-      </item>
-      <item row="5" column="0">
-       <spacer name="verticalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
       </item>
       <item row="3" column="0">
        <widget class="QGroupBox" name="min_max_layout">
@@ -348,130 +429,13 @@ border: 1px solid black;</string>
         </layout>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QGroupBox" name="title_layout">
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-          <italic>false</italic>
-          <underline>false</underline>
-         </font>
-        </property>
-        <property name="title">
-         <string/>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_5">
-         <item row="3" column="0" colspan="2">
-          <widget class="QRadioButton" name="above">
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <italic>false</italic>
-             <underline>false</underline>
-            </font>
-           </property>
-           <property name="text">
-            <string>Diagram felett</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0" colspan="2">
-          <widget class="QRadioButton" name="below">
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <italic>false</italic>
-             <underline>false</underline>
-            </font>
-           </property>
-           <property name="text">
-            <string>Diagram alatt</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1" alignment="Qt::AlignLeft|Qt::AlignVCenter">
-          <widget class="QLineEdit" name="title_text">
-           <property name="minimumSize">
-            <size>
-             <width>300</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>1400</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <italic>false</italic>
-             <underline>false</underline>
-            </font>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0" colspan="2">
-          <widget class="QRadioButton" name="no_title">
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <italic>false</italic>
-             <underline>false</underline>
-            </font>
-           </property>
-           <property name="text">
-            <string>Nincs cím</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="title_label">
-           <property name="maximumSize">
-            <size>
-             <width>140</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <italic>false</italic>
-             <underline>false</underline>
-            </font>
-           </property>
-           <property name="text">
-            <string>Diagramcím: </string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="6" column="0">
+      <item row="7" column="0">
        <widget class="QGroupBox" name="bottom_layout">
         <property name="title">
          <string/>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
-         <item row="3" column="1" colspan="2" alignment="Qt::AlignHCenter">
+         <item row="3" column="1" colspan="2" alignment="Qt::AlignRight|Qt::AlignVCenter">
           <widget class="QPushButton" name="back">
            <property name="font">
             <font>
@@ -511,7 +475,7 @@ background-color: rgb(218, 218, 218);</string>
            </property>
           </widget>
          </item>
-         <item row="3" column="0" alignment="Qt::AlignHCenter">
+         <item row="3" column="0" alignment="Qt::AlignLeft|Qt::AlignVCenter">
           <widget class="QPushButton" name="update_button">
            <property name="font">
             <font>
@@ -528,6 +492,19 @@ background-color: rgb(218, 218, 218);</string>
          </item>
         </layout>
        </widget>
+      </item>
+      <item row="4" column="0">
+       <spacer name="verticalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </item>

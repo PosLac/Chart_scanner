@@ -53,8 +53,8 @@ class Worker(QObject):
         self.window.generation_completed.emit()
         print("Creation finished")
 
-    @pyqtSlot(str, object, object, object)
-    def update_chart(self, name, color, legend, legend_position):
+    @pyqtSlot(object, object, object)
+    def update_chart(self, color, legend, legend_position):
         print("update_chart started")
 
         # if name:
@@ -70,10 +70,10 @@ class Worker(QObject):
         #       self.window.title_str, self.window.title_pos)
 
         if legend is not None:
-            latex.prepare_data_for_update(self.window.orientation, True, self.window.ratios, color, self.window.legend_bars_data, legend_position,
+            latex.prepare_data_for_update(self.window.orientation, True, self.window.ratios, color, legend_position,
                                           self.window.minMax_array, self.window.title_str, self.window.title_pos)
         else:
-            latex.prepare_data_for_update(self.window.orientation, False, self.window.ratios, color, None, None,
+            latex.prepare_data_for_update(self.window.orientation, False, self.window.ratios, color, None,
                                           self.window.minMax_array, self.window.title_str, self.window.title_pos)
 
         print("OS SYSTEM")
