@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 import pytesseract
 from pytesseract import Output
-import functions.image_detectations as detects
-from functions import image_edits as edits
+import functions.image_detections as detects
+from functions import image_edits as edits, color_detections, image_detections
 
 top_right_point = None
 bottom_left_point = None
@@ -11,14 +11,14 @@ bottom_left_point = None
 
 def detect_legend_bars(legend):
     bars_stats, bars_with_labels = morph_transform_for_legend(legend)
-    bars_with_colors = detects.detect_colors(legend, bars_stats, bars_with_labels)
+    bars_with_colors = color_detections.detect_colors(legend, bars_stats, bars_with_labels)
 
     return bars_with_colors
 
 
 def morph_transform_for_legend(img):
     legend_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    legend_binary = np.uint8(np.ndarray(legend_gray.shape))
+    legend_binary = np.ndarray(legend_gray.shape, np.uint8)
     legend_binary.fill(0)
     legend_binary[legend_gray < 220] = 255
 
@@ -43,9 +43,9 @@ def morph_transform_for_legend(img):
 
 
 def detect_legend_texts(bars_max_x):
-    legend_orig = detects.legend_orig
+    legend_orig = detects.legend_without_bars
 
-    # cv2.imshow("legend_orig", legend_orig)
+    cv2.imwrite("legend_orig.png", legend_orig)
     legend_gray = cv2.cvtColor(legend_orig, cv2.COLOR_BGR2GRAY)
 
     legend_binary = np.ndarray(legend_gray.shape, np.uint8())
@@ -56,8 +56,8 @@ def detect_legend_texts(bars_max_x):
 
     config_title = r'--oem 3 --psm 1'
     # print(f"legend_text: {legend_text}")
-    legend_data = pytesseract.pytesseract.image_to_data(legend_binary, config=config_title, output_type=Output.DICT)
-    # print(f"legend_data: {legend_data['text']}")
+    legend_data = pytesseract.pytesseract.image_to_data(legend_binary, config=config_title, output_type=Output.DICT,
+                                                        lang='hun')
     n = len(legend_data['level'])
 
     text_lines = []
@@ -70,7 +70,7 @@ def detect_legend_texts(bars_max_x):
         w = legend_data['width'][i]
         h = legend_data['height'][i]
 
-        if conf > 70 and text.strip() != "" and bars_max_x <= x:
+        if conf >= 60 and text.strip() != "" and bars_max_x <= x:
             # print(f"conf: {conf}, text: {text}")
             text_lines.append((text, y + h, x, y, w, h))
 
@@ -109,7 +109,8 @@ def detect_legend_texts(bars_max_x):
         merged_texts[i] = values
         merged_texts[i]["text"] = " ".join(values["text"])
 
-    print("\tmerged_texts: {\n\t\t" + "\n\t\t".join(f"{key}: {values}" for key, values in merged_texts.items()) + "}")
+    image_detections.print_array("merged_texts", merged_texts)
+
     for key, values in merged_texts.items():
         text = values["text"]
         x = values["x"]
@@ -119,35 +120,32 @@ def detect_legend_texts(bars_max_x):
 
         cv2.rectangle(legend_orig, (x, y), (x + w, y + h), (0, 255, 0), 2)
         cv2.putText(legend_orig, text, (x, y + h + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
-        cv2.imshow("legend_orig", legend_orig)
+        # cv2.imshow("legend_orig", legend_orig)
 
     return merged_texts
 
 
 def merge_bars_with_texts(bars, texts):
     threshold = 10
-    bars_with_texts = {}
+    bars_with_texts = []
 
-    for key, values in bars.items():
-        bar_bottom = values["y"] + values["h"]
+    for bar in bars:
+        bar_bottom = bar["y"] + bar["h"]
         # print(f"bar_bottom: {bar_bottom}")
 
         for t_key, t_values in texts.items():
             text_bottom = t_values["y"] + t_values["h"]
             if abs(text_bottom - bar_bottom) <= threshold:
                 # print(f"text_bottom: {text_bottom}")
-                bars_with_texts[key] = {
-                    "color": values["color"],
-                    "bar_x": values["x"],
-                    "bar_y": values["y"],
-                    "bar_w": values["w"],
-                    "bar_h": values["h"],
+                bars_with_texts.append({
+                    "color": bar["color"],
+                    "bar_x": bar["x"],
+                    "bar_y": bar["y"],
+                    "bar_w": bar["w"],
+                    "bar_h": bar["h"],
                     "text": t_values["text"]
-                }
-
-    print("\tbars_with_texts: {\n\t\t" + "\n\t\t".join(
-        f"{key}: {values}" for key, values in bars_with_texts.items()) + "}")
-
+                })
+    image_detections.print_array("bars_with_texts", bars_with_texts)
     return bars_with_texts
 
 
@@ -183,3 +181,18 @@ def detect_legend_position():
 
     bottom_left_point = (bottom_left_point[0] // edits.UPSCALE_RATE, bottom_left_point[1] // edits.UPSCALE_RATE)
     print(f"bottom_left_point: {bottom_left_point}")
+
+
+def add_text_to_bars(bars, legend_bars):
+    threshold = 60
+    text_groups = {}
+
+    for bar_with_text in legend_bars:
+        for key, values in bars.items():
+            norm = int(np.linalg.norm(np.array(values["group_color"], np.int8) - np.array(bar_with_text["color"], np.int8)))
+            if norm <= threshold:
+                text_groups[bar_with_text["text"]] = {
+                    "group_color": values["group_color"],
+                    "bars": values["bars"]
+                }
+    return text_groups

@@ -3,7 +3,7 @@ import os
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QPixmap
 
-import functions.image_detectations as detects
+import functions.image_detections as detects
 import functions.to_latex as latex
 from functions.main import main
 

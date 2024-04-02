@@ -86,7 +86,7 @@ def threshold() -> np.ndarray:
     global binary, hugh
     binary = np.uint8(np.ndarray(img_gray.shape))
     binary.fill(0)
-    binary[img_gray < 200] = 255
+    binary[img_gray < 220] = 255
     # imshow_resized("img_gray", img_gray, 0.5)
     # imshow_resized("binary", binary, 0.5)
     hugh = cv2.Canny(img_gray, 50, 200, None, 3)
