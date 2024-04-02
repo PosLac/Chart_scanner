@@ -260,7 +260,7 @@ def prepare_data_for_generation(orientation, grouped, legend_bars_with_data=None
     coordinates_with_options = []
 
     # Set options to title above the chart
-    plot_options_array = prepare_title_above(False, plot_options_array, title, title_pos)
+    plot_options_array = prepare_title(False, plot_options_array, title, title_pos)
 
     max_number = axis_detections.tick_number_of_longest_bar
     print(f"\ttick_number_of_longest_bar: {max_number}")
@@ -312,7 +312,7 @@ def prepare_data_for_update(orientation, grouped, updated_ratios, color_data, le
     coordinates_with_options = []
 
     # set options to title above the chart
-    plot_options_array = prepare_title_above(True, plot_options_array, title, title_pos)
+    plot_options_array = prepare_title(True, plot_options_array, title, title_pos)
 
     # set minimum and maximum values for x and y-axis
     if min_max_array:
@@ -368,6 +368,7 @@ def prepare_data_for_grouped_chart(plot_options_array, legend_position, texts_an
     legend_top_right = from_x, from_y
 
     plot_options_array.append("legend style={at={" + str(legend_top_right) + "}}")
+    plot_options_array.append("legend cell align={left}")
     print(f"\tplot_options: {plot_options_array}")
 
     # if orientation == 'xbar':
@@ -423,7 +424,7 @@ def prepare_data_for_grouped_chart(plot_options_array, legend_position, texts_an
     return plot_options_array, define_color_arguments, legend_arguments, coordinates_with_options
 
 
-def prepare_title_above(update, plot_options_array, title, title_pos):
+def prepare_title(update, plot_options_array, title, title_pos):
     if update:
         # title above the chart
         if title_pos == 1:

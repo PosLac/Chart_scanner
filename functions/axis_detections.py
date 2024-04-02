@@ -463,8 +463,8 @@ def add_int_to_tick_data(numbers_str_array, numbers_data):
         x2 = number[0] + number[2] + x_bias
         y2 = number[1] + number[3] + y_bias
         cv2.putText(edits.resized_gray, str(numbers_str_array[j]), (x2 - x_bias, y2), cv2.QT_FONT_NORMAL, 1, 0, 2)
-        centoid_x = np.round(number[0] + number[2] // 2)
-        centoid_y = np.round(number[1] + number[3] // 2)
+        centoid_x = np.round(number[0] + (number[2] // 2))
+        centoid_y = np.round(number[1] + (number[3] // 2))
         new_number = {
             "x": number[0],
             "y": number[1],
@@ -599,7 +599,7 @@ def find_values_of_simple_bars(ticks_data, bar_data, horizontal):
     bar_w_h_name = "h" if horizontal else "w"
 
     for i, bar in enumerate(bar_data):
-        bar_centoid = (bar[bar_x_y_name] + bar[bar_w_h_name]) // 2
+        bar_centoid = bar[bar_x_y_name] + (bar[bar_w_h_name] // 2)
 
         # Find the closest tick
         for tick in ticks_data:

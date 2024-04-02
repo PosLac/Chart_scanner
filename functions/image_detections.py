@@ -27,7 +27,6 @@ resized_gray = None
 binary = None
 legend_orig = None
 legend_without_bars = None
-average_character_height = None
 global_column_ticks_str = []
 global_row_ticks_str = []
 column_numbers_data = []
@@ -39,7 +38,7 @@ colors = None
 def connected_components():
     global orientation, binary, num_size, percent, resized_gray, chart_with_bars_img, r_numbers, centoids, stats, max_y, new_numbers, \
         chart_title, elements, x_bias, y_bias, col_nums, row_nums, \
-        row_ticks_without_outliers, sorted_column_data, c_numbers_str, r_numbers_str, labels, average_character_height, global_row_ticks_str, global_column_ticks_str, row_numbers_data, column_numbers_data
+        row_ticks_without_outliers, sorted_column_data, c_numbers_str, r_numbers_str, labels, global_row_ticks_str, global_column_ticks_str, row_numbers_data, column_numbers_data
 
     binary = edits.threshold()
 
@@ -171,12 +170,14 @@ def connected_components():
 
 
 def detect_title(has_title):
+    title_area = int(axis_detections.average_character_height * 3)
+
     if has_title == 0:
         return None
     elif has_title == 1:
-        title_img = binary[0:200, 0:]
+        title_img = binary[0:title_area, 0:]
     elif has_title == -1:
-        title_img = binary[-200:, 0:]
+        title_img = binary[-title_area:, 0:]
 
     title_img = 255 - title_img
     chart_title = pytesseract.pytesseract.image_to_string(title_img, config=config_title)
@@ -294,9 +295,6 @@ def define_simple_chart_values(bars_with_colors):
         ratios = np.round(bar_hs / longest_bar["w"], 2)
         axis_detections.tick_number_of_longest_bar = axis_detections.find_value_of_bar(row_numbers_data, longest_bar,
                                                                                        True)
-
-        # if orientation == 'xbar':
-        #     ratios = np.flip(ratios)
 
         bar_x_values = ratios * axis_detections.tick_number_of_longest_bar
         bars_with_colors = axis_detections.find_values_of_simple_bars(column_numbers_data, bars_with_colors, True)
