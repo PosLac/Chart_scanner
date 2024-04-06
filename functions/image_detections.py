@@ -20,11 +20,10 @@ new_numbers = None
 orientation = None
 chart_title = None
 row_ticks_without_outliers = []
-sorted_column_data = []
+sorted_y_axis_data = []
 r_new_numbers = []
 c_new_numbers = []
 resized_gray = None
-binary = None
 legend_orig = None
 legend_without_bars = None
 global_column_ticks_str = []
@@ -33,178 +32,50 @@ column_numbers_data = []
 row_numbers_data = []
 bars_with_axis_value_pairs = []
 colors = None
+title = None
 
 
-def connected_components():
-    global orientation, binary, num_size, percent, resized_gray, chart_with_bars_img, r_numbers, centoids, stats, max_y, new_numbers, \
-        chart_title, elements, x_bias, y_bias, col_nums, row_nums, \
-        row_ticks_without_outliers, sorted_column_data, c_numbers_str, r_numbers_str, labels, global_row_ticks_str, global_column_ticks_str, row_numbers_data, column_numbers_data
-
-    binary = edits.threshold()
-
-    # number_of_components = background included
-    # labels = matrix, 0-background, 1-component
-    # stats = enclosing rectangle upper left point, width, length, number of pixels
-    # centoids = center points of object
-    number_of_components, labels, stats, centoids = cv2.connectedComponentsWithStats(binary, None, 8)
-
-    isolated_column, isolated_row = axis_detections.isolate_x_y(binary.shape, number_of_components, stats)
-    axis_detections.get_average_character_height(isolated_column)
-
-    isolated_column = axis_detections.cut_column_outliers(isolated_column)
-    isolated_row = axis_detections.cut_row_outliers(isolated_row)
-
-    sorted_column_data = sorted(isolated_column, key=lambda x: (x[1], x[0]))
-    sorted_row_data = sorted(isolated_row, key=lambda x: x[0])
-
-    merged_row_data = axis_detections.merge_multi_digit_numbers(sorted_row_data, False)
-    merged_column_data = axis_detections.merge_multi_digit_numbers(sorted_column_data, True)
-
-    res = []
-    big_res = []
-    for stat in stats:
-        if stat[4] < edits.NUM_SIZE:
-            res.append(stat[2] * stat[3])
-        else:
-            big_res.append(stat)
-
-    res_max = max(res) + 10
-    chart_with_bars_img = binary.copy()
-
-    # r_numbers = []
-    # c_numbers = []
-    for row_num in merged_row_data:
-        # r_numbers.append(row_num)
-        res.append(row_num)
-        start = (row_num[0], row_num[1])
-        end = (row_num[0] + row_num[2], row_num[1] + row_num[3])
-        cv2.rectangle(edits.resized_gray, start, end, 0, 2)
-
-    for col_num in merged_column_data:
-        # c_numbers.append(col_num)
-        res.append(col_num)
-        start = (col_num[0], col_num[1])
-        end = (col_num[0] + col_num[2], col_num[1] + col_num[3])
-        cv2.rectangle(edits.resized_gray, start, end, 0, 3)
-
-    i = 0
-    percent = edits.UPSCALE_RATE
-    x_bias = int(10 * percent)
-    y_bias = int(9 * percent)
-
-    x_bias = int(axis_detections.average_character_height // 2.7)
-    y_bias = int(axis_detections.average_character_height // 3)
-
-    _, labels, stats, centoids = cv2.connectedComponentsWithStats(binary, None, 8)
-    sorted_stats = sorted(stats, key=lambda x: x[4], reverse=True)
-    stats_max = sorted_stats[1]
-    x1 = 0 if stats_max[0] < 0 else stats_max[0]
-    x2 = x1 + stats_max[2]
-    y1 = stats_max[1]
-    y2 = y1 + stats_max[3]
-
-    img_b = binary
-    img_b[y1:y2, x1:x2] = 0
-    img_b = axis_detections.remove_small_objects(sorted_stats, img_b)
-
-    c_numbers_str = []
-    for number in merged_column_data:
-        x1 = 0 if number[0] - x_bias < 0 else number[0] - x_bias
-        x2 = number[0] + number[2] + x_bias
-        y1 = 0 if number[1] - y_bias < 0 else number[1] - y_bias
-        y2 = number[1] + number[3] + y_bias
-
-        img_re = img_b[y1:y2, x1:x2]
-        img_re = 255 - img_re
-        chart_with_bars_img[y1:y2 - y_bias, x1:x2 - x_bias] = 0
-
-        title = pytesseract.pytesseract.image_to_string(img_re, config=multi_digits)
-        title = re.sub(r'[\n]', '', title)
-        cv2.imwrite(f"img_col{title}.png", img_re)
-        c_numbers_str.append(title)
-        i += 1
-
-    r_numbers_str = []
-    for number in merged_row_data:
-        x1 = 0 if number[0] - x_bias < 0 else number[0] - x_bias
-        x2 = number[0] + number[2] + x_bias
-        y1 = 0 if number[1] - y_bias < 0 else number[1] - y_bias
-        y2 = number[1] + number[3] + y_bias
-
-        img_re = img_b[y1:y2, x1:x2]
-        img_re = 255 - img_re
-        chart_with_bars_img[y1:y2 - y_bias, x1:x2 - x_bias] = 0
-
-        title = pytesseract.pytesseract.image_to_string(img_re, config=multi_digits)
-        title = re.sub(r'[\n]', '', title)
-        # cv2.imwrite(f"img_row {title}.png", img_re)
-        r_numbers_str.append(title)
-        i += 1
-
-    # print('r_numbers_str: ', r_numbers_str)
-    row_type = None
-    row_type = 'str'
-    row_type = 'int'
-    col_type = None
-    col_type = 'str'
-    col_type = 'int'
-
-    if row_type == 'int':
-        global_row_ticks_str = axis_detections.convert_ticks_to_numbers(r_numbers_str)
-        print_array("global_row_ticks_str", global_row_ticks_str)
-
-        row_numbers_data = axis_detections.add_int_to_tick_data(global_row_ticks_str, merged_row_data)
-        # print_array("row_numbers_data", row_numbers_data)
-    # elif row_type == 'str':
-    #     row_str()
-
-    if col_type == 'int':
-        global_column_ticks_str = axis_detections.convert_ticks_to_numbers(c_numbers_str)
-        print_array("global_column_ticks_str", global_column_ticks_str)
-
-        column_numbers_data = axis_detections.add_int_to_tick_data(global_column_ticks_str, merged_column_data)
-        # print_array("column_numbers_data", column_numbers_data)
-
-    elif col_type == 'str':
-        axis_detections.col_str()
-
-
-def detect_title(has_title):
+def detect_title(title_pos, img):
+    global title
     title_area = int(axis_detections.average_character_height * 3)
 
-    if has_title == 0:
-        return None
-    elif has_title == 1:
-        title_img = binary[0:title_area, 0:]
-    elif has_title == -1:
-        title_img = binary[-title_area:, 0:]
+    if title_pos == 1:
+        title_img = img[0:title_area, 0:]
+    elif title_pos == -1:
+        title_img = img[-title_area:, 0:]
 
     title_img = 255 - title_img
-    chart_title = pytesseract.pytesseract.image_to_string(title_img, config=config_title)
-    print(f"\t Detected title: {chart_title}")
-    return chart_title
+    _, labels, stats, _ = cv2.connectedComponentsWithStats(title_img, None, 8)
 
+    sorted_stats = sorted(stats, key=lambda x: x[4], reverse=True)
+    sorted_stats = np.delete(sorted_stats, 0, 0)
+    threshold = round(axis_detections.average_character_height * 1.6, 3)
+    sorted_stats = axis_detections.group_by_axis(sorted_stats, threshold, True)
+    merged_stats = sorted_stats
 
-def bars():
-    global mean
-    elements = edits.elements
-    new_elements = []
-    for bar in elements:
-        start = bar[1] + bar[3]
-        bar = np.append(bar, start)
-        new_elements.append(bar)
+    x_start = min(merged_stats, key=lambda x: x[0])[0]
+    y_start = min(merged_stats, key=lambda x: x[1])[1]
 
-    elements = new_elements
-    sum = 0
-    for bar in elements:
-        sum += bar[5]
-    mean = sum / len(elements)
+    x_end = x_start + max(merged_stats, key=lambda x: x[2])[2]
+    y_end = y_start + max(merged_stats, key=lambda x: x[3])[3]
+
+    cropped_title_img = title_img[y_start:y_end, x_start:x_end]
+    chart_title = pytesseract.pytesseract.image_to_string(cropped_title_img, config=config_title, lang='hun')
+    print(f"\tDetected title: {chart_title}")
+    title = chart_title
+
+    title_stat = [x_start, x_end, y_start, y_end]
+    if title_pos == -1:
+        title_stat[2] = img.shape[0] - title_area + y_start
+        title_stat[3] = img.shape[0] - title_area + y_end
+
+    return chart_title, title_stat
 
 
 def define_orientation():
     global elements, bar_hs, bars, ratios, r_numbers, orientation, resized_gray, r_numbers, c_numbers, mean
     resized = edits.resized_gray
-    elements = edits.elements
+    elements = edits.bars_stats
     bar_hs = []
 
     # Select biggest bar
@@ -212,7 +83,7 @@ def define_orientation():
     max_full = sorted_elements[0]
 
     # Rendezés adott tengely szerint
-    if max_full[3] > max_full[1]:
+    if max_full[3] > max_full[2]:
         x_v = 3
         f_or_s = 0
         orientation = 'ybar'
@@ -237,8 +108,10 @@ def define_orientation():
     width = int(resized.shape[1] / percent)
     height = int(resized.shape[0] / percent)
     resized = cv2.resize(resized, (width, height))
-    cv2.imwrite('rects_' + orientation + '.png', resized)
+    # cv2.imwrite('rects_' + orientation + '.png', resized)
     # cv2.imwrite('bars_'+orientation+'.png', bars)
+
+    print("Orientation done")
 
 
 # def define_ratios(grouped, bars_with_data):
@@ -288,111 +161,127 @@ def define_orientation():
 #             # ratios = np.round(bar_hs / (mean - c_new_numbers[0][6]), 2)
 
 
-def define_simple_chart_values(bars_with_colors):
-    global bar_hs, ratios, orientation, r_new_numbers, c_new_numbers, row_numbers_data, column_numbers_data, bars_with_axis_value_pairs
-    if orientation == 'xbar':
-        longest_bar = max(bars_with_colors, key=lambda x: x["w"])
-        ratios = np.round(bar_hs / longest_bar["w"], 2)
-        axis_detections.tick_number_of_longest_bar = axis_detections.find_value_of_bar(row_numbers_data, longest_bar,
-                                                                                       True)
+def define_simple_chart_values(bars_with_colors, y_axis_type, x_axis_type, y_axis_ticks, x_axis_ticks):
+    global bar_hs, ratios, orientation, column_numbers_data, bars_with_axis_value_pairs
 
-        bar_x_values = ratios * axis_detections.tick_number_of_longest_bar
-        bars_with_colors = axis_detections.find_values_of_simple_bars(column_numbers_data, bars_with_colors, True)
-        bars_with_axis_value_pairs = axis_detections.add_axis_value_pairs_to_bars(bar_x_values, bars_with_colors, False)
+    text_for_axis = None
 
-    elif orientation == 'ybar':
+    if orientation == 'ybar':
         bars_with_colors = sorted(bars_with_colors, key=lambda x: x["x"])
 
-        longest_bar = max(bars_with_colors, key=lambda x: x["h"])
-        ratios = np.round(bar_hs / longest_bar["h"], 2)
-
-        axis_detections.tick_number_of_longest_bar = axis_detections.find_value_of_bar(column_numbers_data,
-                                                                                       longest_bar, False)
-        bar_x_values = ratios * axis_detections.tick_number_of_longest_bar
-        bars_with_colors = axis_detections.find_values_of_simple_bars(row_numbers_data, bars_with_colors, False)
-        bars_with_axis_value_pairs = axis_detections.add_axis_value_pairs_to_bars(bar_x_values,
-                                                                                  bars_with_colors, False)
-
-
-def define_grouped_chart_ratios(bars_with_data):
-    global bar_hs, orientation, ratios, bars_with_axis_value_pairs, colors
-
-    grouped_bars_with_data = bars_with_data
-    # print_array("grouped_bars_with_data", grouped_bars_with_data)
-
-    # if orientation == 'xbar':
-    #     max_width = 0
-    #
-    #     # Find the longest bar
-    #     for bar_group in bars_with_data.values():
-    #         for bar in bar_group["bars"]:
-    #             if bar["w"] > max_width:
-    #                 max_width = bar["w"]
-    #                 longest_bar = bar
-    #
-    #     # ratios = np.round(bar_hs / longest_bar["w"], 2)
-    #
-    #     longest_bar["row value"] = axis_detections.find_value_of_bar(row_numbers_data, longest_bar, True)
-    #
-    #     # longest_bar = find_longest_bar(bars_with_colors, True)
-    #     # ratios = np.round(bar_hs / longest_bar["w"], 2)
-    #     # bar_x_values = ratios * axis_detections.tick_number_of_longest_bar
-    #
-    #     bars_with_axis_value_pairs = axis_detections.find_values_of_grouped_bars(column_numbers_data, bars_with_data,
-    #                                                                              longest_bar, True)
-    #     # bars_with_axis_value_pairs = axis_detections.add_axis_value_pairs_to_bars(bar_x_values, bars_with_colors, True)
-    #
-    # elif orientation == 'ybar':
-    #     max_height = 0
-    #
-    #     # Find the longest bar
-    #     for bar_group in bars_with_data.values():
-    #         for bar in bar_group["bars"]:
-    #             if bar["h"] > max_height:
-    #                 max_height = bar["h"]
-    #                 longest_bar = bar
-    #
-    #     longest_bar["column value"] = axis_detections.find_value_of_bar(column_numbers_data, longest_bar, False)
-    #     bars_with_axis_value_pairs = axis_detections.find_values_of_grouped_bars(row_numbers_data, bars_with_data,
-    #                                                                              longest_bar, False)
-    max_width_or_height = 0
-    if orientation == "xbar":
-        w_or_h_name = "w"
-        row_or_column_value_name = "row value"
-        numbers_data = row_numbers_data
-        other_axis_numbers_data = column_numbers_data
-    else:
-        w_or_h_name = "h"
-        row_or_column_value_name = "column value"
-        numbers_data = column_numbers_data
-        other_axis_numbers_data = row_numbers_data
-
-    # Find the longest bar
-    for bar_group in bars_with_data.values():
-        for bar in bar_group["bars"]:
-            if bar[w_or_h_name] > max_width_or_height:
-                max_width_or_height = bar[w_or_h_name]
-                longest_bar = bar
-
-    longest_bar[row_or_column_value_name] = axis_detections.find_value_of_bar(numbers_data, longest_bar,
-                                                                              orientation == "xbar")
-    bars_with_axis_value_pairs = axis_detections.find_values_of_grouped_bars(other_axis_numbers_data, bars_with_data,
-                                                                             longest_bar, orientation == "xbar")
+    bars_with_colors = set_axis_value_for_bars(x_axis_type, x_axis_ticks, bars_with_colors, True, False)
+    bars_with_colors = set_axis_value_for_bars(y_axis_type, y_axis_ticks, bars_with_colors, False, False)
+    bars_with_axis_value_pairs = bars_with_colors
 
     print_array("bars_with_axis_value_pairs", bars_with_axis_value_pairs)
+
+    if y_axis_type == "text":
+        text_for_axis = y_axis_ticks
+
+    elif x_axis_type == "text":
+        text_for_axis = x_axis_ticks
+
+    return text_for_axis
+
+
+def define_grouped_chart_values(bars_with_colors, y_axis_type, x_axis_type, y_axis_ticks, x_axis_ticks):
+    global bar_hs, orientation, ratios, bars_with_axis_value_pairs, colors
+
+    text_for_axis = None
+
+    if orientation == 'ybar':
+        for group in bars_with_colors.values():
+            group["bars"] = sorted(group["bars"], key=lambda x: x["x"])
+
+    bars_with_colors = set_axis_value_for_bars(x_axis_type, x_axis_ticks, bars_with_colors, True, True)
+    bars_with_colors = set_axis_value_for_bars(y_axis_type, y_axis_ticks, bars_with_colors, False, True)
+    bars_with_axis_value_pairs = bars_with_colors
+
+    print_array("bars_with_axis_value_pairs", bars_with_axis_value_pairs)
+
+    if y_axis_type == "text":
+        text_for_axis = y_axis_ticks
+
+    elif x_axis_type == "text":
+        text_for_axis = x_axis_ticks
 
     colors = {}
     for key, values in bars_with_axis_value_pairs.items():
         colors[key] = values["group_color"]
 
+    return text_for_axis
+
+
+def set_axis_value_for_bars(axis_type, tick_data_array, bar_data, for_x_axis, grouped):
+    # Set indexes
+    if for_x_axis:
+        x_y_value_name = "x"
+        w_h_value_name = "w"
+        centoid_name = "centoid_x"
+        value_name = "row value"
+    else:
+        x_y_value_name = "y"
+        w_h_value_name = "h"
+        centoid_name = "centoid_y"
+        value_name = "column value"
+
+    if grouped:
+        if axis_type == "number":
+            for values in bar_data.values():
+                for bar in values["bars"]:
+                    bar_value = axis_detections.find_value_of_bar(tick_data_array, bar, axis_type, for_x_axis, grouped)
+                    bar[value_name] = bar_value
+            return bar_data
+
+        elif axis_type == "text":
+            for values in bar_data.values():
+                for bar in values["bars"]:
+                    closest_tick_data = tick_data_array[0]
+
+                    if for_x_axis:
+                        bar_end = bar[x_y_value_name] + bar[w_h_value_name]
+                    else:
+                        bar_end = bar[x_y_value_name]
+
+                    # Find the closest tick
+                    for i, number_data in enumerate(tick_data_array):
+                        if abs(bar_end - number_data[centoid_name]) <= abs(bar_end - closest_tick_data[centoid_name]):
+                            closest_tick_data = number_data
+                            value = axis_detections.find_value_of_bar(tick_data_array, bar, axis_type, for_x_axis,
+                                                                      grouped)
+                            bar[value_name] = value
+            return bar_data
+
+    else:
+        if axis_type == "number":
+            for bar in bar_data:
+                value = axis_detections.find_value_of_bar(tick_data_array, bar, axis_type, for_x_axis, grouped)
+                bar[value_name] = value
+            return bar_data
+
+        elif axis_type == "text":
+            for bar in bar_data:
+                closest_tick_data = tick_data_array[0]
+
+                if for_x_axis:
+                    bar_end = bar[x_y_value_name] + bar[w_h_value_name]
+                else:
+                    bar_end = bar[x_y_value_name]
+
+                # Find the closest tick
+                for i, number_data in enumerate(tick_data_array):
+                    if abs(bar_end - number_data[centoid_name]) <= abs(bar_end - closest_tick_data[centoid_name]):
+                        closest_tick_data = number_data
+                        value = axis_detections.find_value_of_bar(tick_data_array, bar, axis_type, for_x_axis, grouped)
+                        bar[value_name] = value
+            return bar_data
+
 
 def find_longest_bar(bars_with_data, horizontal):
     # Set indexes
     if horizontal:
-        x_y_key = "x"
         w_h_key = "w"
     else:
-        x_y_key = "y"
         w_h_key = "h"
 
     # Find the longest bar
@@ -420,8 +309,6 @@ def scan_legend(legend):
         for color in colors:
             bars_max_x = max(color["x"] + color["w"], bars_max_x)
 
-        # print(bars_max_x)
-
         for color in colors:
             x = color["x"]
             y = color["y"]
@@ -429,18 +316,17 @@ def scan_legend(legend):
             h = color["h"]
 
             cv2.rectangle(legend_for_draw, (x, y), (x + w, y + h), (0, 0, 255), 2)
-            # cv2.imshow("legend_orig", legend_orig)
 
         cv2.line(legend_for_draw, (bars_max_x, 0), (bars_max_x, legend_for_draw.shape[1]), (255, 0, 0), 2)
-        cv2.imwrite("legend_for_draw.png", legend_for_draw)
 
         legend_without_bars[:, :bars_max_x] = 255
-        cv2.imwrite("legend_without_bars.png", legend_without_bars)
 
         texts = legend_detections.detect_legend_texts(bars_max_x)
         bars_with_texts = legend_detections.merge_bars_with_texts(colors, texts)
         return bars_with_texts
 
+
+# todo delete
 
 def print_array(name, array):
     if isinstance(array, list):

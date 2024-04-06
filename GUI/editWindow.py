@@ -186,7 +186,6 @@ class EditWindow(QMainWindow):
             print("Update finished")
 
     def set_groups_for_update(self):
-        self.colors.clear()
         for group_text, color in self.updated_colors.items():
             if group_text.text() == "":
                 self.error_list.append("Csoport neve nem lehet üres.")

@@ -45,14 +45,14 @@ def morph_transform_for_legend(img):
 def detect_legend_texts(bars_max_x):
     legend_orig = detects.legend_without_bars
 
-    cv2.imwrite("legend_orig.png", legend_orig)
+    # cv2.imwrite("legend_orig.png", legend_orig)
     legend_gray = cv2.cvtColor(legend_orig, cv2.COLOR_BGR2GRAY)
 
     legend_binary = np.ndarray(legend_gray.shape, np.uint8())
     legend_binary.fill(255)
     legend_binary[legend_gray < 220] = 0
 
-    cv2.imwrite("legend_binary_inv.png", legend_binary)
+    # cv2.imwrite("legend_binary_inv.png", legend_binary)
 
     config_title = r'--oem 3 --psm 1'
     # print(f"legend_text: {legend_text}")

@@ -1,29 +1,240 @@
 import cv2
 import numpy as np
+import pytesseract
 
 import functions.image_edits as edits
 from functions import image_detections
 
 average_character_height = None
-tick_number_of_longest_bar = None
+longest_bar_value = None
+multi_digits = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'
 
 
-# Fill two arrays with values from each x and y coordinate axes
-def isolate_x_y(binary_shape, number_of_components, stats):
+def remove_title_from_img(binary, title_stats):
+    start_x = title_stats[0]
+    end_x = min(title_stats[1], binary.shape[0])
+
+    start_y = title_stats[2]
+    end_y = min(title_stats[3], binary.shape[1])
+
+    binary[start_y:end_y, start_x:end_x] = 0
+    return binary
+
+
+def remove_bars_from_img(binary):
+    _, labels, stats, centoids = cv2.connectedComponentsWithStats(binary, None, 8)
+    sorted_stats = sorted(stats, key=lambda x: x[4], reverse=True)
+    stats_max = sorted_stats[1]
+    x1 = 0 if stats_max[0] < 0 else stats_max[0]
+    x2 = x1 + stats_max[2]
+    y1 = stats_max[1]
+    y2 = y1 + stats_max[3]
+
+    ticks_img = binary.copy()
+    ticks_img[y1:y2, x1:x2] = 0
+    return ticks_img
+
+
+def define_tick_type_for_axis(title_pos):
+    global orientation, num_size, percent, resized_gray, chart_with_bars_img, r_numbers, centoids, stats, max_y, new_numbers, \
+        chart_title, elements, x_bias, y_bias, col_nums, row_nums, \
+        row_ticks_without_outliers, sorted_y_axis_data, c_numbers_str, r_numbers_str, labels, global_row_ticks_str, global_column_ticks_str, row_numbers_data, column_numbers_data
+
+    binary_orig = edits.threshold()
+    only_ticks_img = remove_bars_from_img(binary_orig)
+    _, labels, stats, centoids = cv2.connectedComponentsWithStats(only_ticks_img, None, 8)
+    # Remove background
+    stats = np.delete(stats, 0, 0)
+    isolated_y_axis, isolated_x_axis = isolate_x_y(stats)
+    get_average_character_height(isolated_y_axis)
+    image_detections.chart_title = None
+
+    if title_pos:
+        image_detections.chart_title, title_stats = image_detections.detect_title(title_pos, only_ticks_img)
+        only_ticks_img = remove_title_from_img(only_ticks_img, title_stats)
+        if title_pos == -1:
+            _, _, stats, _ = cv2.connectedComponentsWithStats(only_ticks_img, None, 8)
+            stats = np.delete(stats, 0, 0)
+            isolated_y_axis, isolated_x_axis = isolate_x_y(stats)
+            get_average_character_height(isolated_y_axis)
+
+    isolated_x_axis = cut_row_outliers(isolated_x_axis)
+
+    threshold = round(average_character_height * 1.6, 3)
+    sorted_y_axis_data = group_by_axis(isolated_y_axis, threshold, False)
+    merged_y_axis_ticks = merge_tick_characters(sorted_y_axis_data, threshold)
+
+    sorted_x_axis_data = group_by_axis(isolated_x_axis, threshold, True)
+    threshold = round(average_character_height * 0.6, 3)
+    merged_x_axis_ticks = merge_tick_characters(sorted_x_axis_data, threshold)
+    image_detections.define_orientation()
+
+    y_axis_type, corrected_y_axis_ticks = define_axis_type(merged_y_axis_ticks, merged_x_axis_ticks, only_ticks_img)
+    print(f"\tY axis type: {y_axis_type}")
+    print(f"\tY axis ticks: {corrected_y_axis_ticks}")
+
+    x_axis_type, corrected_x_axis_ticks = define_axis_type(merged_x_axis_ticks, merged_y_axis_ticks, only_ticks_img)
+    print(f"\tX axis type: {x_axis_type}")
+    print(f"\tX axis ticks: {corrected_x_axis_ticks}")
+
+    y_axis_data = add_value_to_tick_data(corrected_y_axis_ticks, merged_y_axis_ticks)
+    x_axis_data = add_value_to_tick_data(corrected_x_axis_ticks, merged_x_axis_ticks)
+
+    return y_axis_type, x_axis_type, y_axis_data, x_axis_data
+
+
+def define_axis_type(merged_ticks, merged_ticks_of_other_axis, only_ticks_img_orig):
+    max_y = only_ticks_img_orig.shape[0]
+    max_x = only_ticks_img_orig.shape[1]
+    bias = int(average_character_height * 0.5)
+    ticks_str_array = []
+    only_ticks_img_copy = only_ticks_img_orig.copy()
+
+    for tick_data in merged_ticks_of_other_axis:
+        start_y = tick_data[1]
+        end_y = tick_data[1] + tick_data[3]
+
+        start_x = tick_data[0]
+        end_x = tick_data[0] + tick_data[2]
+        only_ticks_img_copy[start_y:end_y, start_x:end_x] = 0
+
+    for tick_data in merged_ticks:
+        start_y = max(tick_data[1] - bias, 0)
+        end_y = min(tick_data[1] + tick_data[3] + bias, max_y)
+
+        start_x = max(tick_data[0] - bias, 0)
+        end_x = min(tick_data[0] + tick_data[2] + bias, max_x)
+
+        cropped_tick_img = only_ticks_img_copy[start_y:end_y, start_x:end_x]
+        config_title = r'--oem 3 --psm 7'
+        tick_str = pytesseract.pytesseract.image_to_string(cropped_tick_img, config=config_title, lang='hun')
+        ticks_str_array.append(tick_str.strip())
+
+    tick_number_array = []
+    tick_number = 0
+    for tick_str in ticks_str_array:
+        char_digit = 0
+        tick_without_comma = tick_str.replace(",", "")
+        for character in tick_without_comma:
+            if character.isdigit():
+                char_digit += 1
+
+        if char_digit >= len(tick_without_comma) * 0.8:
+            tick_number += 1
+            tick_number_array.append(tick_without_comma)
+        else:
+            tick_number_array.append(tick_str)
+
+    if tick_number >= len(ticks_str_array) * 0.5:
+        ticks_type = "number"
+        corrected_ticks = correcting_steps_between_ticks(tick_number_array)
+        return ticks_type, corrected_ticks
+    else:
+        ticks_type = "text"
+        return ticks_type, tick_number_array
+
+
+def group_by_axis(tick_data, threshold, horizontal):
+    groups = {}
+
+    if horizontal:
+        first_group_index = 0
+        tick_data = sorted(tick_data, key=lambda x: x[0])
+    else:
+        first_group_index = 1
+
+    for item in tick_data:
+        group_key = round(item[first_group_index] / threshold, 2)
+        added = False
+        for key, value in groups.items():
+            if abs(key - group_key) <= 1:
+                groups[key].append(item)
+                added = True
+
+        if not added:
+            groups[group_key] = [item]
+
+    sorted_data = []
+    for group in sorted(groups.keys()):
+        sorted_group = sorted(groups[group], key=lambda x: x[0])
+        sorted_data.extend(sorted_group)
+
+    return sorted_data
+
+
+def merge_tick_characters(sorted_data, threshold):
+    temp_numbers = []
+
+    for i in range(len(sorted_data)):
+        # Check if not component of a multi digit number
+        if len(sorted_data[i]) > 1:
+            i_x = sorted_data[i][0]
+            i_y = sorted_data[i][1]
+            i_w = sorted_data[i][2]
+            i_h = sorted_data[i][3]
+            i_pixels = sorted_data[i][4]
+            i_centoid_y = i_y + i_h / 2
+
+            multi_digit_number = []
+
+            for j in range(i + 1, len(sorted_data)):
+                # Check if not component of a multi digit number
+                if len(sorted_data[j]) > 1:
+                    j_x = sorted_data[j][0]
+                    j_y = sorted_data[j][1]
+                    j_w = sorted_data[j][2]
+                    j_h = sorted_data[j][3]
+                    j_pixels = sorted_data[j][4]
+                    j_centoid_y = j_y + j_h / 2
+
+                    # Break if number is from another column tick
+                    if abs(i_centoid_y - j_centoid_y) >= threshold:
+                        break
+
+                    # If end of number is close to another number
+                    if abs((i_x + i_w) - j_x) <= threshold or abs((i_y + i_h) - j_y) <= threshold:
+                        # Set empty array for multi digit number parts
+                        sorted_data[i] = [0]
+                        sorted_data[j] = [0]
+                        # Add multi digit number
+                        min_y = min(i_y, j_y)
+                        max_height = max(i_y + i_h, j_y + j_h)
+                        multi_digit_number = [i_x, min_y, j_x + j_w - i_x, max_height - min_y,
+                                              i_pixels + j_pixels]
+                        # print(f"\tadded     {multi_digit_number}")
+
+                        i_x = multi_digit_number[0]
+                        i_y = multi_digit_number[1]
+                        i_w = multi_digit_number[2]
+                        i_h = multi_digit_number[3]
+                        i_pixels = multi_digit_number[4]
+
+            # Check if still not component of a multi digit number
+            if len(sorted_data[i]) > 1:
+                temp_numbers.append(sorted_data[i])
+            else:
+                temp_numbers.append(multi_digit_number)
+    return temp_numbers
+
+
+def isolate_x_y(stats):
     col_nums = []
     row_nums = []
 
-    # Searching in the left third for y-axis and bottom third for x-axis of the picture
-    row_third = binary_shape[0] / 10
-    col_third = binary_shape[1] / 3.5
-    medium_size_object = binary_shape[0] * binary_shape[1] // 200
+    # Searching in the left-side for y-axis and bottom for x-axis of the picture
+    bottom_bar = max(edits.bars_stats, key=lambda x: x[1] + x[3])
+    upper_y_for_row = bottom_bar[1] + bottom_bar[3]
+    left_x_for_column = min(edits.bars_stats[:, 0])
 
-    for i in range(1, number_of_components):
-        if stats[i][0] < row_third and stats[i][4] < medium_size_object:
-            col_nums.append(stats[i])
+    for stat in stats:
+        x_end = stat[0] + stat[2]
+        y_start = stat[1]
 
-        if stats[i][1] > col_third and stats[i][4] < medium_size_object:
-            row_nums.append(stats[i])
+        if y_start > upper_y_for_row:
+            row_nums.append(stat)
+
+        elif x_end < left_x_for_column:
+            col_nums.append(stat)
 
     return col_nums, row_nums
 
@@ -35,43 +246,7 @@ def get_average_character_height(col_nums):
     print(f"\taverage_height {average_character_height}")
 
 
-# def find_tick_number_for_longest_bar(tick_data, longest_bar, horizontal):
-#     global tick_number_of_longest_bar
-#
-#     # Set indexes
-#     if horizontal:
-#         x_y_value_name = "x"
-#         w_h_value_name = "w"
-#         centoid_name = "centoid_x"
-#     else:
-#         x_y_value_name = "y"
-#         w_h_value_name = "h"
-#         centoid_name = "centoid_y"
-#
-#     closest_tick_data = tick_data[0]
-#
-#     if horizontal:
-#         bar_end = longest_bar[x_y_value_name] + longest_bar[w_h_value_name]
-#     else:
-#         bar_end = longest_bar[x_y_value_name]
-#
-#     closest_tick_index = 0
-#
-#
-#     # neighbour_tick_value = tick_data[closest_tick_index - 1]["value"] if bar_end < closest_tick_data[centoid_name] else \
-#     # tick_data[closest_tick_index + 1]["value"]
-#     #
-#     # # Neighbour is left from the closest tick
-#     # if neighbour_tick_value[centoid_name] < closest_tick_data[centoid_name]:
-#     #     tick_number_of_longest_bar = closest_tick_data["value"] - int(
-#     #         distance_from_closest_tick / average_tick_distance * closest_tick_data["value"])
-#     #
-#     # # Neighbour is right from the closest tick
-#     # else:
-#     #     tick_number_of_longest_bar = closest_tick_data["value"] + int(
-#     #         distance_from_closest_tick / average_tick_distance * closest_tick_data["value"])
-
-def find_value_of_bar(tick_data_array, bar_object, horizontal):
+def find_value_of_bar(tick_data_array, bar_object, axis_type, horizontal, grouped):
     # Set indexes
     if horizontal:
         x_y_value_name = "x"
@@ -91,23 +266,26 @@ def find_value_of_bar(tick_data_array, bar_object, horizontal):
 
     # Find the closest tick
     for i, number_data in enumerate(tick_data_array):
-        # print(f"\tnumber_data (x, y):{number_data[:2]},\t(width, height):{number_data[2:4]},centoid_x:{number_data[5]},\tpixels:{number_data[6]},\tnumber: {number_data[7]}")
         if abs(bar_end - number_data[centoid_name]) <= abs(bar_end - closest_tick_data[centoid_name]):
             closest_tick_data = number_data
 
-    distance_from_closest_tick = abs(bar_end - closest_tick_data[centoid_name])
+    if axis_type == "text" or (grouped and (image_detections.orientation == "xbar") != horizontal):
+        return closest_tick_data["value"]
 
-    if distance_from_closest_tick == 0:
-        value_of_bar = int(closest_tick_data["value"])
+    elif axis_type == "number":
+        distance_from_closest_tick = bar_end - closest_tick_data[centoid_name]
+
+        if distance_from_closest_tick == 0:
+            value_of_bar = int(closest_tick_data["value"])
+            return value_of_bar
+
+        average_tick_distance = calculate_average_tick_distance(tick_data_array, horizontal)
+        average_tick_step = calculate_average_tick_step(tick_data_array, False)
+
+        value_of_bar = int(closest_tick_data["value"]) + round(
+            distance_from_closest_tick / average_tick_distance * average_tick_step, 2)
+
         return value_of_bar
-
-    average_tick_distance = calculate_average_tick_distance(tick_data_array, horizontal)
-    average_tick_step = calculate_average_tick_step(tick_data_array, False)
-
-    value_of_bar = int(closest_tick_data["value"]) + int(
-        distance_from_closest_tick / average_tick_distance * average_tick_step)
-
-    return value_of_bar
 
 
 def calculate_average_tick_distance(tick_data, horizontal):
@@ -156,10 +334,10 @@ def cut_column_outliers(isolated_column):
         start = (num[0], num[1])
         end = (num[0] + num[2], num[1] + num[3])
         cv2.rectangle(gray_copy_1, start, end, (0, 255, 0), 2)
-        cv2.imwrite("resized_gray before cut.png", gray_copy_1)
+        # cv2.imwrite("resized_gray before cut.png", gray_copy_1)
 
     while centoid_distances >= average_character_height:
-        print(f"\n\t{j + 1}. iteration, centoid_distances: {centoid_distances}")
+        # print(f"\n\t{j + 1}. iteration, centoid_distances: {centoid_distances}")
 
         x_of_centoids = []
 
@@ -186,7 +364,7 @@ def cut_column_outliers(isolated_column):
         start = (num[0], num[1])
         end = (num[0] + num[2], num[1] + num[3])
         cv2.rectangle(gray_copy_2, start, end, (0, 255, 0), 2)
-        cv2.imwrite("resized_gray after cut.png", gray_copy_2)
+        # cv2.imwrite("resized_gray after cut.png", gray_copy_2)
 
     return isolated_column
 
@@ -197,29 +375,6 @@ def cut_row_outliers(isolated_row):
     std_r = 100
 
     while std_r > 10 and j < len(isolated_row):
-        # print(f"\n\t{j + 1}. iteration")
-
-        # sum_c = 0
-        # # x coordinate of column values
-        # for c in col_nums:
-        #     sum_c += c[0]
-        #
-        # mean_c = sum_c / len(col_nums)
-        #
-        # c_final = []
-        # c_x = []
-        # for x in col_nums:
-        #     c_x.append(x[0])
-        # std_c = np.std(c_x)
-        #
-        # for c in col_nums:
-        #     # print(c, abs(c[0] - mean_c), std_c)
-        #     if abs(c[0] - mean_c) < std_c or std_c < 5:
-        #         c_final.append(c)
-        # col_nums = c_final
-
-        ########################################
-
         sum_r = 0
         for r in isolated_row:
             sum_r += r[1]
@@ -404,12 +559,7 @@ def remove_small_objects(sorted_stats, img_b):
 #     print('\tnumbers: ', numbers)
 #
 
-def convert_ticks_to_numbers(numbers_str_array):
-    # Remove whitespaces
-    for i in range(len(numbers_str_array)):
-        splitted_number = numbers_str_array[i].split()
-        numbers_str_array[i] = ''.join(splitted_number)
-
+def correcting_steps_between_ticks(numbers_str_array):
     # Insert missing tick and convert str to int
     for i in range(len(numbers_str_array)):
         try:
@@ -427,8 +577,7 @@ def convert_ticks_to_numbers(numbers_str_array):
         if numbers_str_array[i] == "":
             wrong_step_indexes.append(i - 1)
 
-        elif numbers_str_array[i - 1] == "" or abs(numbers_str_array[i] - numbers_str_array[i - 1]) - abs(
-                average_step) > threshold:
+        elif numbers_str_array[i - 1] == "" or abs(numbers_str_array[i - 1] + average_step - numbers_str_array[i]) > 0:
             wrong_step_indexes.append(i - 1)
 
     # index 0    1    2      3      4      5      6
@@ -452,7 +601,16 @@ def convert_ticks_to_numbers(numbers_str_array):
     return numbers_str_array
 
 
-def add_int_to_tick_data(numbers_str_array, numbers_data):
+def convert_ticks_to_numbers(numbers_str_array):
+    # Remove whitespaces
+    for i in range(len(numbers_str_array)):
+        splitted_number = numbers_str_array[i].split()
+        numbers_str_array[i] = ''.join(splitted_number)
+
+    return correcting_steps_between_ticks(numbers_str_array)
+
+
+def add_value_to_tick_data(numbers_str_array, numbers_data):
     global average_character_height
     j = 0
     new_numbers = []
@@ -619,12 +777,12 @@ def find_values_of_simple_bars(ticks_data, bar_data, horizontal):
             # Bar is under the closest tick
             if bar_centoid > closest_tick_data[centoid_name]:
                 tick_value_of_bar = round(closest_tick_data["value"] - (
-                        distance_from_closest_tick / average_tick_distance * average_tick_step), 2)
+                        distance_from_closest_tick / average_tick_distance * abs(average_tick_step)), 2)
 
             # Bar is above the closest tick
             else:
                 tick_value_of_bar = round(closest_tick_data["value"] + (
-                        distance_from_closest_tick / average_tick_distance * average_tick_step), 2)
+                        distance_from_closest_tick / average_tick_distance * abs(average_tick_step)), 2)
 
         bar_data[i]["column value"] = round(tick_value_of_bar, 2)
 

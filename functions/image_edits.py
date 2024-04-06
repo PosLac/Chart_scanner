@@ -10,7 +10,7 @@ BLOCK_SIZE = 5
 
 resized_gray = None
 resized_color = None
-elements = None
+bars_stats = None
 bars_with_labels = None
 img_orig_gray = None
 img_orig_color = None
@@ -18,6 +18,7 @@ img_gray = None
 img_color = None
 binary = None
 hugh = None
+bars_img = None
 
 
 def read_img(file_name: str) -> np.ndarray:
@@ -72,7 +73,7 @@ def ni_black_threshold() -> None:
         None
     """
     global img_gray
-    img_gray = cv2.ximgproc.niBlackThreshold(img_gray, 255, cv2.THRESH_TRUNC, BLOCK_SIZE, K, binarizationMethod=0,
+    img_gray = cv2.ximgproc.niBlackThreshold(img_gray, 200, cv2.THRESH_TRUNC, BLOCK_SIZE, K, binarizationMethod=0,
                                              r=108)
 
 
@@ -150,21 +151,20 @@ def morphological_transform(img, legend_position) -> np.ndarray:
     """
 
     """
-    global bar_hs, chart_with_bars_img, bars, bars_with_labels, elements
-    # cv2.imshow('chart_with_bars_img', chart_with_bars_img)
+    global bar_hs, bars_img, bars_with_labels, bars_stats
+
+    img = threshold()
+
     retval = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    bars = cv2.dilate(img, retval)
-    bars = cv2.erode(bars, retval, None, None, 7)
-    bars = cv2.erode(bars, retval, None, None, 7)
-    bars = cv2.dilate(bars, retval, None, None, 4)
-    bars = cv2.dilate(bars, retval, None, None, 4)
-    # imshow_resized("bars1", bars, 0.5)
-    bars_p = np.ndarray(bars.shape)
+    bars_img = cv2.dilate(img, retval)
+    bars_img = cv2.erode(bars_img, retval, None, None, 7)
+    bars_img = cv2.erode(bars_img, retval, None, None, 7)
+    bars_img = cv2.dilate(bars_img, retval, None, None, 4)
+    bars_img = cv2.dilate(bars_img, retval, None, None, 4)
+    bars_p = np.ndarray(bars_img.shape)
     bars_p.fill(0)
-    bars_p[bars > 0] = 255
-    bars = np.uint8(bars_p)
-    # imshow_resized("bars2", bars, 0.5)
-    # cv2.imwrite('bars1.png', bars)
+    bars_p[bars_img > 0] = 255
+    bars_img = np.uint8(bars_p)
 
     # Remove legend bars
     if legend_position:
@@ -172,22 +172,17 @@ def morphological_transform(img, legend_position) -> np.ndarray:
         legend_start_y = legend_position.topLeft().y() * UPSCALE_RATE
         legend_end_x = legend_position.bottomRight().x() * UPSCALE_RATE
         legend_end_y = legend_position.bottomRight().y() * UPSCALE_RATE
-        bars[legend_start_y:legend_end_y, legend_start_x:legend_end_x] = 0
+        bars_img[legend_start_y:legend_end_y, legend_start_x:legend_end_x] = 0
 
-    _, bars_with_labels, stats, _ = cv2.connectedComponentsWithStats(bars, None, 8)
-    elements = stats.copy()
+    _, bars_with_labels, stats, _ = cv2.connectedComponentsWithStats(bars_img, None, 8)
+    bars_stats = stats.copy()
 
     # Remove background
-    elements = np.delete(elements, 0, 0)
-    return elements
+    bars_stats = np.delete(bars_stats, 0, 0)
+    return bars_stats
+
 
 # TODO delete,  just for funs:
 def imshow_resized(name, img, ratio=0.5):
     resized_img = cv2.resize(img, (int(img.shape[1] * ratio), int(img.shape[0] * ratio)))
     cv2.imshow(f"{name}", resized_img)
-
-
-def show_color(name, color):
-    color_img = np.ndarray((200, 200, 3), np.uint8)
-    color_img[:] = color
-    cv2.imshow(name, color_img)
