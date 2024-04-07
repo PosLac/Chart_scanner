@@ -175,7 +175,8 @@ class EditWindow(QMainWindow):
     def update_chart(self):
         self.fill_error_list()
         self.set_title_data()
-        self.set_groups_for_update()
+        if isinstance(self.colors, dict):
+            self.set_groups_for_update()
         self.set_min_max_array()
         self.display_error_list()
 
@@ -186,6 +187,7 @@ class EditWindow(QMainWindow):
             print("Update finished")
 
     def set_groups_for_update(self):
+        self.colors = {}
         for group_text, color in self.updated_colors.items():
             if group_text.text() == "":
                 self.error_list.append("Csoport neve nem lehet üres.")
