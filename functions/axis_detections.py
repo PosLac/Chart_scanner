@@ -577,8 +577,13 @@ def correcting_steps_between_ticks(numbers_str_array):
         if numbers_str_array[i] == "":
             wrong_step_indexes.append(i - 1)
 
-        elif numbers_str_array[i - 1] == "" or abs(numbers_str_array[i - 1] + average_step - numbers_str_array[i]) > 0:
+        elif numbers_str_array[i - 1] == "":
             wrong_step_indexes.append(i - 1)
+
+        elif abs(numbers_str_array[i - 1] + average_step - numbers_str_array[i]) > 0:
+            wrong_step_indexes.append(i - 1)
+            numbers_str_array[i] = ""
+
 
     # index 0    1    2      3      4      5      6
     # value 55   1000   1500   2000   2500   3000
@@ -592,9 +597,16 @@ def correcting_steps_between_ticks(numbers_str_array):
                 if i + 1 not in wrong_step_indexes and i + 1 < len(numbers_str_array) - 2:
                     numbers_str_array[wrong_step] = numbers_str_array[i + 1] - (average_step * (i + 1))
 
+        # Last step is wrong
         elif wrong_step == len(numbers_str_array) - 2:
-            numbers_str_array[wrong_step + 1] = numbers_str_array[wrong_step] + average_step
 
+            # Tick before last is wrong
+            if numbers_str_array[wrong_step] == "":
+                numbers_str_array[wrong_step] = numbers_str_array[wrong_step - 1] + average_step
+
+            # Last tick is wrong
+            if numbers_str_array[-1] == "":
+                 numbers_str_array[-1] = numbers_str_array[wrong_step] + average_step
         else:
             numbers_str_array[wrong_step] = numbers_str_array[wrong_step - 1] + average_step
 
@@ -829,3 +841,12 @@ def find_values_of_simple_bars(ticks_data, bar_data, horizontal):
 
 def col_str():
     pass
+
+
+def draw_rectangle_around_ticks(axis_data):
+    img = edits.resized_gray.copy()
+    for num in axis_data:
+        start = (num[0], num[1])
+        end = (num[0] + num[2], num[1] + num[3])
+        cv2.rectangle(img, start, end, 0, 4)
+        cv2.imwrite(f"rect{len(axis_data)}.png", img)
