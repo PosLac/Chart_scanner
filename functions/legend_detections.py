@@ -18,16 +18,19 @@ def detect_legend_bars(legend):
 
 def morph_transform_for_legend(img):
     legend_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    cv2.imwrite("legend_gray.png", legend_gray)
+
     legend_binary = np.ndarray(legend_gray.shape, np.uint8)
     legend_binary.fill(0)
-    legend_binary[legend_gray < 220] = 255
+    legend_binary[legend_gray < 240] = 255
+    cv2.imwrite("legend_binary.png", legend_binary)
 
     retval = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    bars = cv2.dilate(legend_binary, retval, None, None, 1)
-    bars = cv2.erode(bars, retval, None, None, 4)
-    bars = cv2.dilate(bars, retval, None, None, 3)
 
-    # cv2.imshow("bars", bars)
+    bars = cv2.erode(legend_binary, retval, None, None, 1)
+    bars = cv2.dilate(bars, retval, None, None, 1)
+    bars = cv2.erode(bars, retval, None, None, 3)
+    bars = cv2.dilate(bars, retval, None, None, 3)
 
     bars_p = np.ndarray(bars.shape)
     bars_p.fill(0)

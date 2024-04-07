@@ -93,7 +93,7 @@ def detect_bar_color(resized_color, bars_stats, bars_labels, label):
 def merge_legend_bar_colors(bar_stats_with_colors):
     # print(f"\tbar_stats_with_colors: {bar_stats_with_colors}")
     grouped_bgr_colors = []
-    threshold = 60
+    threshold = 40
     similar_color_index = None
 
     for i, bar_stats in enumerate(bar_stats_with_colors):
