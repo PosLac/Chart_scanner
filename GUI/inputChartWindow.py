@@ -1,13 +1,12 @@
 import faulthandler
 import sys
 
-import cv2
 from PyQt5 import uic
-from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QImageReader
 from PyQt5.QtWidgets import QFileDialog, QMainWindow, QPushButton, QLabel, QApplication, QGridLayout
 
-from inputImageViewMouseDrag import InputImageViewMouseDrag
+from inputImageView import InputImageView
 from mainWindow import MainWindow
 from viewWithScene import ViewWithScene
 
@@ -24,10 +23,10 @@ class InputChartWindow(QMainWindow):
 
         # left_grid_layout
         self.left_grid_layout = self.findChild(QGridLayout, "left_grid_layout")
-        self.input_image_view = self.findChild(InputImageViewMouseDrag, "input_image_view")
+        self.input_image_view = self.findChild(InputImageView, "input_image_view")
         self.input_image_view.setScene(self.input_image_view.scene)
         self.input_image_view.cropped.connect(
-            lambda: self.jump_to_scan_button.setHidden(False))  # todo false -> not előző állapot
+            lambda: self.jump_to_scan_button.setHidden(False))
         self.left_grid_layout.addWidget(self.input_image_view, 1, 0, alignment=Qt.AlignHCenter)
         self.file_name_label = self.findChild(QLabel, "file_name")
         self.open_files_button = self.findChild(QPushButton, "open_files")
@@ -47,8 +46,6 @@ class InputChartWindow(QMainWindow):
         self.load_without_crop_button.setHidden(True)
         self.output_chart = self.findChild(QLabel, "output_chart")
 
-        # self.input_image = self.findChild(QLabel, "input_image")
-
         self.file_name = None
         self.showMaximized()
 
@@ -62,7 +59,6 @@ class InputChartWindow(QMainWindow):
             self.input_image_view.enable_crop = True
             self.input_image_view.clear_scene()
             self.chart = QPixmap(self.file_name)
-            # self.chart = self.chart.scaledToWidth(700)
             self.input_image_view.set_image(self.chart)
             self.input_image_view.file_name = self.file_name
             self.load_without_crop_button.setHidden(False)

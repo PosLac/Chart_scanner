@@ -18,19 +18,17 @@ def detect_legend_bars(legend):
 
 def morph_transform_for_legend(img):
     legend_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    cv2.imwrite("legend_gray.png", legend_gray)
+    # cv2.imwrite("A-legend_gray.png", legend_gray)
 
     legend_binary = np.ndarray(legend_gray.shape, np.uint8)
     legend_binary.fill(0)
     legend_binary[legend_gray < 240] = 255
-    cv2.imwrite("legend_binary.png", legend_binary)
-
-    retval = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    # cv2.imwrite("A-legend_binary.png", legend_binary)
+    retval = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
 
     bars = cv2.erode(legend_binary, retval, None, None, 1)
     bars = cv2.dilate(bars, retval, None, None, 1)
-    bars = cv2.erode(bars, retval, None, None, 3)
-    bars = cv2.dilate(bars, retval, None, None, 3)
+    # cv2.imwrite("A-legend_bars.png", bars)
 
     bars_p = np.ndarray(bars.shape)
     bars_p.fill(0)
@@ -141,7 +139,7 @@ def merge_bars_with_texts(bars, texts):
             if abs(text_bottom - bar_bottom) <= threshold:
                 # print(f"text_bottom: {text_bottom}")
                 bars_with_texts.append({
-                    "color": bar["color"],
+                    "bgr_color": bar["bgr_color"],
                     "bar_x": bar["x"],
                     "bar_y": bar["y"],
                     "bar_w": bar["w"],
@@ -187,12 +185,13 @@ def detect_legend_position():
 
 
 def add_text_to_bars(bars, legend_bars):
-    threshold = 60
+    threshold = 40
     text_groups = {}
 
     for bar_with_text in legend_bars:
         for key, values in bars.items():
-            norm = int(np.linalg.norm(np.array(values["group_color"], np.int8) - np.array(bar_with_text["color"], np.int8)))
+            norm = int(np.linalg.norm(
+                np.array(values["group_color"], np.int8) - np.array(bar_with_text["bgr_color"], np.int8)))
             if norm <= threshold:
                 text_groups[bar_with_text["text"]] = {
                     "group_color": values["group_color"],

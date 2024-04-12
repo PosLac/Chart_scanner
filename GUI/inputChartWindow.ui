@@ -43,7 +43,7 @@
        <number>5</number>
       </property>
       <item row="1" column="0" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
-       <widget class="InputImageViewMouseDrag" name="input_image_view">
+       <widget class="InputImageView" name="input_image_view">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -373,12 +373,12 @@
   <customwidget>
    <class>ViewWithScene</class>
    <extends>QGraphicsView</extends>
-   <header>viewWithScene</header>
+   <header location="global">viewWithScene</header>
   </customwidget>
   <customwidget>
-   <class>InputImageViewMouseDrag</class>
+   <class>InputImageView</class>
    <extends>QGraphicsView</extends>
-   <header>inputImageViewMouseDrag</header>
+   <header location="global">inputImageView</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -56,7 +56,7 @@ def upscale() -> None:
     width = int(img_gray.shape[1] * UPSCALE_RATE)
 
     img_gray = cv2.resize(img_gray, (width, height))
-    NUM_SIZE = img_gray.shape[0] * img_gray.shape[1] / 1000  # todo what is NUM_SIZE?
+    NUM_SIZE = img_gray.shape[0] * img_gray.shape[1] / 1000
     resized_gray = img_gray.copy()
 
     height = int(img_color.shape[0] * UPSCALE_RATE)
@@ -87,9 +87,8 @@ def threshold() -> np.ndarray:
     global binary, hugh
     binary = np.uint8(np.ndarray(img_gray.shape))
     binary.fill(0)
-    binary[img_gray < 220] = 255
-    # imshow_resized("img_gray", img_gray, 0.5)
-    # imshow_resized("binary", binary, 0.5)
+    binary[img_gray < 230] = 255
+    cv2.imwrite("A-binary.png", binary)
     hugh = cv2.Canny(img_gray, 50, 200, None, 3)
     return binary
 
@@ -141,26 +140,23 @@ def rotate():
 
     rows, cols = img_gray.shape[:2]
     m = cv2.getRotationMatrix2D((cols / 2, rows / 2), avr - 90, 1)
-    rot = cv2.warpAffine(hugh, m, (cols, rows))
     binary = cv2.warpAffine(binary, m, (cols, rows))
     resized_gray = cv2.warpAffine(resized_gray, m, (cols, rows))
     img_gray = cv2.warpAffine(img_gray, m, (cols, rows))
 
 
-def morphological_transform(img, legend_position) -> np.ndarray:
+def morphological_transform(legend_position) -> np.ndarray:
     """
 
     """
-    global bar_hs, bars_img, bars_with_labels, bars_stats
+    global bars_img, bars_with_labels, bars_stats
 
     img = threshold()
-
+    cv2.imwrite("A-bars_img1.png", img)
     retval = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    bars_img = cv2.dilate(img, retval)
-    bars_img = cv2.erode(bars_img, retval, None, None, 7)
-    bars_img = cv2.erode(bars_img, retval, None, None, 7)
-    bars_img = cv2.dilate(bars_img, retval, None, None, 4)
-    bars_img = cv2.dilate(bars_img, retval, None, None, 4)
+
+    bars_img = cv2.erode(img, retval, None, None, 14)
+    bars_img = cv2.dilate(bars_img, retval, None, None, 9)
     bars_p = np.ndarray(bars_img.shape)
     bars_p.fill(0)
     bars_p[bars_img > 0] = 255
@@ -173,6 +169,7 @@ def morphological_transform(img, legend_position) -> np.ndarray:
         legend_end_x = legend_position.bottomRight().x() * UPSCALE_RATE
         legend_end_y = legend_position.bottomRight().y() * UPSCALE_RATE
         bars_img[legend_start_y:legend_end_y, legend_start_x:legend_end_x] = 0
+        cv2.imwrite("bars_img.png", bars_img)
 
     _, bars_with_labels, stats, _ = cv2.connectedComponentsWithStats(bars_img, None, 8)
     bars_stats = stats.copy()
@@ -180,9 +177,3 @@ def morphological_transform(img, legend_position) -> np.ndarray:
     # Remove background
     bars_stats = np.delete(bars_stats, 0, 0)
     return bars_stats
-
-
-# TODO delete,  just for funs:
-def imshow_resized(name, img, ratio=0.5):
-    resized_img = cv2.resize(img, (int(img.shape[1] * ratio), int(img.shape[0] * ratio)))
-    cv2.imshow(f"{name}", resized_img)

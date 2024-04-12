@@ -21,10 +21,39 @@
        <item row="0" column="0">
         <widget class="QGroupBox" name="legend_group">
          <layout class="QGridLayout" name="gridLayout_3">
-          <item row="3" column="0" alignment="Qt::AlignHCenter">
+          <item row="3" column="0" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
            <widget class="QLabel" name="cropped_legend">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>400</width>
+              <height>600</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <kerning>true</kerning>
+             </font>
+            </property>
             <property name="text">
              <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>false</bool>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -98,69 +127,7 @@
          <property name="enabled">
           <bool>true</bool>
          </property>
-         <layout class="QGridLayout" name="title_layout" rowstretch="2,0,0,0,0,0,0">
-          <item row="1" column="1">
-           <widget class="QLabel" name="label">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Diagramcím elhelyezkedése:</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1">
-           <spacer name="verticalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="3" column="1">
-           <widget class="QRadioButton" name="above">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-              <italic>false</italic>
-              <underline>false</underline>
-             </font>
-            </property>
-            <property name="text">
-             <string>Diagram felett</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QRadioButton" name="below">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-              <italic>false</italic>
-              <underline>false</underline>
-             </font>
-            </property>
-            <property name="text">
-             <string>Diagram alatt</string>
-            </property>
-           </widget>
-          </item>
+         <layout class="QGridLayout" name="title_layout" rowstretch="2,0,0,0,0,0,0,0,0">
           <item row="0" column="1">
            <spacer name="verticalSpacer">
             <property name="orientation">
@@ -174,7 +141,58 @@
             </property>
            </spacer>
           </item>
-          <item row="5" column="1">
+          <item row="4" column="1">
+           <widget class="QRadioButton" name="below">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <italic>false</italic>
+              <underline>false</underline>
+             </font>
+            </property>
+            <property name="text">
+             <string>Diagram alatt</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>14</pointsize>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">padding:10px</string>
+            </property>
+            <property name="text">
+             <string>Diagramcím elhelyezkedése:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1">
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="7" column="1">
            <widget class="QRadioButton" name="no_title">
             <property name="font">
              <font>
@@ -185,6 +203,20 @@
             </property>
             <property name="text">
              <string>Nincs cím</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QRadioButton" name="above">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <italic>false</italic>
+              <underline>false</underline>
+             </font>
+            </property>
+            <property name="text">
+             <string>Diagram felett</string>
             </property>
            </widget>
           </item>
@@ -329,7 +361,7 @@
        </widget>
       </item>
       <item row="1" column="0" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
-       <widget class="InputImageViewMouseDrag" name="input_image_view">
+       <widget class="InputImageView" name="input_image_view">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -601,9 +633,9 @@
    <header location="global">viewWithScene</header>
   </customwidget>
   <customwidget>
-   <class>InputImageViewMouseDrag</class>
+   <class>InputImageView</class>
    <extends>QGraphicsView</extends>
-   <header location="global">inputImageViewMouseDrag</header>
+   <header location="global">inputImageView</header>
   </customwidget>
  </customwidgets>
  <resources/>

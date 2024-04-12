@@ -7,42 +7,78 @@ import functions.legend_detections as legend_detections
 from functions import axis_detections, image_detections
 
 
-def prepare_data_for_generation(orientation, grouped, texts_for_axis=None, legend_bars_with_data=None,
-                                legend_position=None, title_pos=None):
-    print("\tPrepare data for generation")
-
-    plot_options_array = [orientation, 'name=mygraph']
+def prepare_universal_data(orientation, chart_type, bgr_color_data, title, legend_position=None,
+                           title_pos=None):
+    print("\tPrepare universal data")
+    plot_options_array = [orientation, "name=barchart"]
     define_color_arguments = []
     coordinates_with_options = []
+    axis_types_with_ticks = axis_detections.axis_types_with_ticks
 
     # Set options to title above the chart
-    plot_options_array = prepare_title(plot_options_array, image_detections.title, title_pos)
+    plot_options_array = prepare_title(plot_options_array, title, title_pos)
 
-    if texts_for_axis:
-        texts_for_axis = texts_for_axis[::-1]
+    # Set text ticks
+    if image_detections.text_for_axis:
+        if orientation == "xbar":
+            image_detections.text_for_axis = image_detections.text_for_axis[::-1]
+
         plot_options_array.append("symbolic " + ("x" if orientation == "ybar" else "y") + " coords={" + ", ".join(
-            ["{" + t['value'] + "}" for t in texts_for_axis]) + "}")
+            ["{" + t['value'] + "}" for t in image_detections.text_for_axis]) + "}")
 
-    max_number = axis_detections.longest_bar_value
-    print(f"\ttick_number_of_longest_bar: {max_number}")
+        if orientation == "xbar":
+            plot_options_array.append("ytick=data")
+        else:
+            plot_options_array.append("xtick=data")
 
     # Set options for grouped chart
-    if grouped:
+    if chart_type == "grouped":
         plot_options_array, define_color_arguments, legend_arguments, coordinates_with_options = prepare_data_for_grouped_chart(
             plot_options_array,
             legend_position,
-            legend_bars_with_data)
+            bgr_color_data)
+
+    # Set options for stacked chart
+    elif chart_type == "stacked":
+
+        plot_options_array[0] = orientation + " stacked"
+
+        plot_options_array, define_color_arguments, legend_arguments, coordinates_with_options = prepare_data_for_grouped_chart(
+            plot_options_array,
+            legend_position,
+            bgr_color_data)
+
+    # Set options for simple chart
     else:
         coordinates = []
         for bar in detects.bars_with_axis_value_pairs:
             coordinates.append(("{" + str(bar["row value"]) + "}", "{" + str(bar["column value"]) + "}"))
-        coordinates_with_options.append((coordinates, 'fill=color'))
-        color_str = ", ".join(map(str, image_detections.colors))
+        coordinates_with_options.append((coordinates, "fill=color"))
+        color_str = ", ".join(map(str, bgr_color_data[::-1]))
         define_color_arguments.append(["color", "RGB", color_str])
         legend_arguments = ""
 
-    print(f"\tdefine_color_arguments: {define_color_arguments}")
-    print(f"\tgroup_coordinates: {coordinates_with_options}")
+    # Set minimum and maximum ticks for y-axis
+    if axis_types_with_ticks["y_axis_type"] == "number":
+        plot_options_array.append(f"ymin={axis_types_with_ticks['y_axis_min']}")
+        plot_options_array.append(f"ymax={axis_types_with_ticks['y_axis_max']}")
+
+    # Set minimum and maximum ticks for x-axis
+    if axis_types_with_ticks["x_axis_type"] == "number":
+        plot_options_array.append(f"xmin={axis_types_with_ticks['x_axis_min']}")
+        plot_options_array.append(f"xmax={axis_types_with_ticks['x_axis_max']}")
+
+    return plot_options_array, define_color_arguments, legend_arguments, coordinates_with_options
+
+
+def prepare_data_for_generation(orientation, chart_type, legend_position=None, title_pos=None):
+    print("\tPrepare data for generation")
+
+    plot_options_array, define_color_arguments, legend_arguments, coordinates_with_options = prepare_universal_data(
+        orientation, chart_type, image_detections.colors, image_detections.title, legend_position, title_pos)
+
+    image_detections.print_array("define_color_arguments", define_color_arguments)
+    image_detections.print_array("group_coordinates", coordinates_with_options)
 
     plot_options_str = ", ".join(plot_options_array)
 
@@ -50,44 +86,15 @@ def prepare_data_for_generation(orientation, grouped, texts_for_axis=None, legen
                    image_detections.title, title_pos)
 
 
-def prepare_data_for_update(orientation, grouped, updated_ratios, color_data, legend_position=None, min_max_array=None,
-                            title=None, title_pos=None):
-    legend_arguments = ""
-    plot_options_array = [orientation, 'name=mygraph']
-    define_color_arguments = []
-    coordinates_with_options = []
+def prepare_data_for_update(orientation, chart_type, colors, legend_position=None, title=None,
+                            title_pos=None):
+    print("\tPrepare data for update")
 
-    # Set options to title above the chart
-    plot_options_array = prepare_title(plot_options_array, title, title_pos)
+    plot_options_array, define_color_arguments, legend_arguments, coordinates_with_options = prepare_universal_data(
+        orientation, chart_type, colors, title, legend_position, title_pos)
 
-    # Set minimum and maximum values for x and y-axis
-    if min_max_array:
-        print(f"\tmin_max_array: {min_max_array}")
-        for min_max in min_max_array:
-            if min_max[2]:
-                plot_options_array.append(min_max[0] + "=" + str(min_max[1]))
-
-    # Set options for grouped chart
-    if grouped:
-        plot_options_array, define_color_arguments, legend_arguments, coordinates_with_options = prepare_data_for_grouped_chart(
-            plot_options_array, legend_position, color_data)
-
-    else:
-        coordinates = []
-        for bar in detects.bars_with_axis_value_pairs:
-            if orientation == "xbar":
-                coordinates.append((bar["row value"], bar["column value"]))
-            else:
-                coordinates.append((bar["column value"], bar["row value"]))
-
-        coordinates_with_options.append((coordinates, f'fill=color{1}'))
-
-        color_str = ", ".join(map(str, color_data))
-        define_color_arguments.append(["color1", "RGB", color_str])
-
-    print(f"\tratios: {updated_ratios}")
-    print(f"\tdefine_color_arguments: {define_color_arguments}")
-    print(f"\tgroup_coordinates: {coordinates_with_options}")
+    image_detections.print_array("define_color_arguments", define_color_arguments)
+    image_detections.print_array("group_coordinates", coordinates_with_options)
 
     plot_options_str = ", ".join(plot_options_array)
 
@@ -111,20 +118,19 @@ def prepare_data_for_grouped_chart(plot_options_array, legend_position, texts_an
     from_y = min(round(1 - (legend_top_right_orig.y() - top_right_point[1]) / height, 2), 1)
 
     legend_top_right = from_x, from_y
-
     plot_options_array.append("legend style={at={" + str(legend_top_right) + "}}")
     plot_options_array.append("legend cell align={left}")
-    print(f"\tplot_options: {plot_options_array}")
+    image_detections.print_array("plot_options", plot_options_array)
 
     # First generation
     if isinstance(texts_and_colors, list):
         for i, bar in enumerate(texts_and_colors):
-            color_str = ", ".join(map(str, bar["color"]))
+            color_str = ", ".join(map(str, bar["bgr_color"][::-1]))
             define_color_arguments.append(["color" + str(i + 1), "RGB", color_str])
             legend_arguments = ", ".join(bar["text"] for bar in texts_and_colors)
     else:
         for i, (key, value) in enumerate(texts_and_colors.items()):
-            color_str = ", ".join(map(str, value))
+            color_str = ", ".join(map(str, value[::-1]))
             define_color_arguments.append(["color" + str(i + 1), "RGB", color_str])
         legend_arguments = ", ".join(texts_and_colors.keys())
 
@@ -182,7 +188,7 @@ def generate_latex(plot_options, legend_arguments, define_color_arguments, coord
 
         # Insert title below the chart
         if title_pos == -1:
-            node_chain = TikZNode(text=title, options=TikZOptions('below =of mygraph'))
+            node_chain = TikZNode(text=title, options=TikZOptions('below =of barchart'))
             doc.append(node_chain)
 
     doc.generate_pdf('tikzdraw', clean_tex=False, compiler='pdfLaTeX')
