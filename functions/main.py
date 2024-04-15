@@ -1,25 +1,24 @@
+import cv2
+
 from functions import image_detections, color_detections, axis_detections, legend_detections
 from functions import image_edits
 from functions import to_latex
 
 
-def main(fname, title_pos, grouped, legend_bars_data=None, legend_position=None):
+def main_fun(chart, title_pos, grouped, straightening, legend_bars_data=None, legend_position=None):
     print("Main started")
 
-    image_edits.read_img(fname)
-    print("Read done")
+    image_edits.img_gray = cv2.cvtColor(chart, cv2.COLOR_BGR2GRAY)
+    image_edits.img_color = chart
 
     image_edits.upscale()
     print("Upscale done")
 
-    image_edits.ni_black_threshold()
-    print("Threshold done")
-
     image_edits.threshold()
     print("Binary done")
 
-    image_edits.rotate()
-    print("Rotate done")
+    if straightening:
+        return image_edits.image_straightening()
 
     image_edits.morphological_transform(legend_position)
     print("Morph done")
@@ -39,7 +38,7 @@ def main(fname, title_pos, grouped, legend_bars_data=None, legend_position=None)
             image_detections.define_grouped_chart_values(bars_with_colors)
     else:
         image_detections.chart_type = "simple"
-        simple_bars_with_colors_array = color_detections.detect_colors(image_edits.resized_color,
+        simple_bars_with_colors_array = color_detections.detect_colors(image_edits.img_color,
                                                                        image_edits.bars_stats,
                                                                        image_edits.bars_with_labels)
         color_detections.get_bar_color_for_simple_chart(simple_bars_with_colors_array)

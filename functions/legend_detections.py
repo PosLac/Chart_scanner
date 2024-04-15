@@ -26,8 +26,9 @@ def morph_transform_for_legend(img):
     # cv2.imwrite("A-legend_binary.png", legend_binary)
     retval = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
 
-    bars = cv2.erode(legend_binary, retval, None, None, 1)
-    bars = cv2.dilate(bars, retval, None, None, 1)
+    # bars = cv2.dilate(legend_binary, retval, None, None, 1)
+    bars = cv2.erode(legend_binary, retval, None, None, 3)
+    bars = cv2.dilate(bars, retval, None, None, 3)
     # cv2.imwrite("A-legend_bars.png", bars)
 
     bars_p = np.ndarray(bars.shape)
@@ -51,14 +52,13 @@ def detect_legend_texts(bars_max_x):
 
     legend_binary = np.ndarray(legend_gray.shape, np.uint8())
     legend_binary.fill(255)
-    legend_binary[legend_gray < 220] = 0
+    legend_binary[legend_gray < 230] = 0
 
     # cv2.imwrite("legend_binary_inv.png", legend_binary)
 
     config_title = r'--oem 3 --psm 1'
     # print(f"legend_text: {legend_text}")
-    legend_data = pytesseract.pytesseract.image_to_data(legend_binary, config=config_title, output_type=Output.DICT,
-                                                        lang='hun')
+    legend_data = pytesseract.pytesseract.image_to_data(legend_binary, config=config_title, output_type=Output.DICT, lang='hun')
     n = len(legend_data['level'])
 
     text_lines = []
@@ -177,11 +177,11 @@ def detect_legend_position():
         if point[0] <= bottom_left_point[0] and point[1] >= bottom_left_point[1]:
             bottom_left_point = point
 
-    top_right_point = (top_right_point[0] // edits.UPSCALE_RATE, top_right_point[1] // edits.UPSCALE_RATE)
-    print(f"top_right_point: {top_right_point}")
+    top_right_point = (top_right_point[0] // edits.upscale_rate, top_right_point[1] // edits.upscale_rate)
+    print(f"\ttop_right_point: {top_right_point}")
 
-    bottom_left_point = (bottom_left_point[0] // edits.UPSCALE_RATE, bottom_left_point[1] // edits.UPSCALE_RATE)
-    print(f"bottom_left_point: {bottom_left_point}")
+    bottom_left_point = (bottom_left_point[0] // edits.upscale_rate, bottom_left_point[1] // edits.upscale_rate)
+    print(f"\tbottom_left_point: {bottom_left_point}")
 
 
 def add_text_to_bars(bars, legend_bars):

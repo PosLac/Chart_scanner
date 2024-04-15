@@ -17,8 +17,9 @@ from viewWithScene import ViewWithScene
 
 
 class MainWindow(QMainWindow):
-    main_work_requested = pyqtSignal(str, object, object)
+    main_work_requested = pyqtSignal(object, object, object)
     generation_completed = pyqtSignal()
+    auto_straightening_signal = pyqtSignal(object)
 
     def __init__(self, parent_window):
         super(MainWindow, self).__init__()
@@ -56,6 +57,9 @@ class MainWindow(QMainWindow):
         self.no_title = self.findChild(QRadioButton, "no_title")
         self.no_title.setChecked(True)
 
+        self.auto_straightening_button = self.findChild(QPushButton, "auto_straightening_button")
+        self.auto_straightening_button.clicked.connect(self.auto_straightening)
+
         # output_layout
         self.output_title = self.findChild(QLabel, "output_title")
         self.output_layout = self.findChild(QGridLayout, "output_layout")
@@ -84,6 +88,7 @@ class MainWindow(QMainWindow):
         self.worker.fname.connect(self.update)
         self.worker.completed.connect(self.workerCompleted)
         self.main_work_requested.connect(self.worker.create_chart)
+        self.auto_straightening_signal.connect(self.worker.auto_straightening)
         self.generation_completed.connect(lambda: self.export_edit_group.setHidden(False))
         self.worker_thread.start()
 
@@ -117,26 +122,23 @@ class MainWindow(QMainWindow):
             self.legend_pixmap = pixmap
 
     def scan_legend(self):
-        legend_image = self.legend_pixmap.toImage()
-        ptr = legend_image.bits()
-        ptr.setsize(legend_image.byteCount())
-        legend_image_np = np.frombuffer(ptr, np.uint8).reshape(legend_image.height(), legend_image.width(), 4)
-
-        # change color to white where alpha channel is 0
-        legend_image_np[legend_image_np[:, :, 3] == 0] = [255, 255, 255, 255]
-        self.legend_image_bgr = cv2.cvtColor(legend_image_np, cv2.COLOR_BGRA2BGR)
-
+        self.legend_image_bgr = self.convert_pixmap_to_image(self.legend_pixmap)
         legend_position = self.input_image_view.crop_rect
         print(f"\tLegend_position: {legend_position}")
 
-        self.main_work_requested.emit(self.parent_window.file_name, self.legend_image_bgr, legend_position)
+        chart_image_np = self.convert_pixmap_to_image(self.input_image_view.image)
+        self.main_work_requested.emit(chart_image_np, self.legend_image_bgr, legend_position)
 
     @pyqtSlot()
-    def set_loading_sceen(self):
+    def set_loading_screen_on_input(self):
+        self.input_image_view.add_label()
+
+    @pyqtSlot()
+    def set_loading_screen_on_output(self):
         self.output_image_view.add_label()
 
     def scan_chart(self):
-        self.set_loading_sceen()
+        self.set_loading_screen_on_output()
 
         if self.above.isChecked():
             self.title_pos = 1
@@ -150,7 +152,8 @@ class MainWindow(QMainWindow):
         if self.input_image_view.crop_rect:
             self.scan_legend()
         else:
-            self.main_work_requested.emit(self.parent_window.file_name, None, None)
+            chart_image_np = self.convert_pixmap_to_image(self.input_image_view.image)
+            self.main_work_requested.emit(chart_image_np, None, None)
 
     def export(self, chart_type):
         input_file = "tikzdraw." + chart_type
@@ -172,3 +175,16 @@ class MainWindow(QMainWindow):
     def back_to_input_window(self):
         self.close()
         self.parent_window.showMaximized()
+
+    def convert_pixmap_to_image(self, pixmap):
+        image = pixmap.toImage()
+        ptr = image.bits()
+        ptr.setsize(image.byteCount())
+        np_image = np.frombuffer(ptr, np.uint8).reshape(image.height(), image.width(), 4)
+        converted_np_image = cv2.cvtColor(np_image, cv2.COLOR_BGRA2BGR)
+        return converted_np_image
+
+    def auto_straightening(self):
+        self.set_loading_screen_on_input()
+        chart_image_np = self.convert_pixmap_to_image(self.input_image_view.image)
+        self.auto_straightening_signal.emit(chart_image_np)

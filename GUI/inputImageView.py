@@ -64,7 +64,6 @@ class InputImageView(ViewWithScene):
         h = pixmap.height()
         self.aspect_ratio = round(w / h, 4)
         if h > w:
-            print(" h > w")
             h = self.optimal_size
             w = int(h * self.aspect_ratio)
             self.resize_ratio = round(pixmap.height() / h, 4)
@@ -73,9 +72,10 @@ class InputImageView(ViewWithScene):
             h = int(w / self.aspect_ratio)
             self.resize_ratio = round(pixmap.width() / w, 4)
 
-        print(
-            f"\tInputImageView resized from {pixmap.width()}x{pixmap.height()} to {w}x{h}, aspect_ratio: {self.aspect_ratio}, resize_ratio {self.resize_ratio}")
+        print(f"\tInputImageView resized from {pixmap.width()}x{pixmap.height()} to {w}x{h}, aspect_ratio: {self.aspect_ratio}, resize_ratio {self.resize_ratio}")
+        self.scene.clear()
         self.setFixedSize(w, h)
+        self.pixmap_item = self.scene.addPixmap(QPixmap())
         self.image = pixmap
         self.pixmap_item.setPixmap(pixmap)
         self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)

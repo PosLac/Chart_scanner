@@ -33,14 +33,11 @@ class ViewWithScene(QGraphicsView):
         self.item.setPos((self.scene.width() - self.label.width()) / 2,
                          (self.scene.height() - self.label.height()) / 2)
 
-    def set_image(self, img):
-        pixmap = img
-
+    def set_image(self, pixmap):
         w = pixmap.width()
         h = pixmap.height()
         self.aspect_ratio = round(w / h, 4)
         if h > w:
-            print(" h > w")
             h = self.optimal_size
             w = int(h * self.aspect_ratio)
             self.resize_ratio = round(pixmap.height() / h, 4)
@@ -49,11 +46,10 @@ class ViewWithScene(QGraphicsView):
             h = int(w / self.aspect_ratio)
             self.resize_ratio = round(pixmap.width() / w, 4)
 
-        print(
-            f"\tViewWithScene resized from {pixmap.width()}x{pixmap.height()} to {w}x{h}, aspect_ratio: {self.aspect_ratio}, resize_ratio {self.resize_ratio}")
+        print(f"\tViewWithScene resized from {pixmap.width()}x{pixmap.height()} to {w}x{h}, aspect_ratio: {self.aspect_ratio}, resize_ratio {self.resize_ratio}")
         self.scene.clear()
-        self.pixmap_item = self.scene.addPixmap(QPixmap())
         self.setFixedSize(w, h)
+        self.pixmap_item = self.scene.addPixmap(QPixmap())
         self.image = pixmap
         self.pixmap_item.setPixmap(pixmap)
         self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)

@@ -215,7 +215,7 @@ def get_bar_color_for_simple_chart(bar_stats_with_colors):
 
 
 def merge_similar_colors(legend_bars_data):
-    all_color_bars_img = cv2.bitwise_and(image_edits.resized_color, image_edits.resized_color,
+    all_color_bars_img = cv2.bitwise_and(image_edits.img_color, image_edits.img_color,
                                          mask=image_edits.bars_img)
     merged_colors = all_color_bars_img.copy()
     cv2.imwrite("A-merged.png", merged_colors)

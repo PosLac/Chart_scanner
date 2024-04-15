@@ -14,7 +14,6 @@ config_title = r'--oem 3 --psm 10 -l hun+eng'
 
 orientation = None
 chart_title = None
-resized_gray = None
 legend_without_bars = None
 bars_with_axis_value_pairs = []
 colors = None
@@ -26,9 +25,11 @@ text_for_axis = None
 def detect_title(title_pos, img):
     global title, chart_title
     title_area = int(axis_detections.average_character_height * 2)
+    _, _, all_stats, _ = cv2.connectedComponentsWithStats(img, None, 8)
+    top_element = sorted(all_stats, key=lambda x: x[1])[1]
 
     if title_pos == 1:
-        title_img = img[0:title_area, 0:]
+        title_img = img[top_element[1]:top_element[1]+title_area, 0:]
     elif title_pos == -1:
         title_img = img[-title_area:, 0:]
 
@@ -42,11 +43,11 @@ def detect_title(title_pos, img):
     sorted_stats = axis_detections.group_by_axis(sorted_stats, threshold, True)
     merged_stats = sorted_stats
 
-    x_start = min(merged_stats, key=lambda x: x[0])[0]
-    y_start = min(merged_stats, key=lambda x: x[1])[1]
+    x_start = max(0, min(merged_stats, key=lambda x: x[0])[0])
+    y_start = max(0, min(merged_stats, key=lambda x: x[1])[1])
 
-    x_end = x_start + max(merged_stats, key=lambda x: x[2])[2]
-    y_end = y_start + max(merged_stats, key=lambda x: x[3])[3]
+    x_end = min(title_img.shape[1], x_start + max(merged_stats, key=lambda x: x[2])[2])
+    y_end = min(title_img.shape[0], y_start + max(merged_stats, key=lambda x: x[3])[3])
 
     cropped_title_img = title_img[y_start:y_end, x_start:x_end]
     # cv2.imwrite("A-cropped_title_img.png", cropped_title_img)
@@ -63,7 +64,7 @@ def detect_title(title_pos, img):
 
 
 def define_orientation():
-    global orientation, resized_gray
+    global orientation
     elements = edits.bars_stats
 
     # Select biggest bar
@@ -351,7 +352,6 @@ def find_longest_bar(bars_with_data, horizontal):
 def scan_legend(legend):
     global legend_without_bars
     if legend is not None:
-        legend_for_draw = legend.copy()
         legend_without_bars = legend.copy()
 
         legend_bar_stats_with_colors = legend_detections.detect_legend_bars(legend)
@@ -364,16 +364,6 @@ def scan_legend(legend):
 
         for color in colors:
             bars_max_x = max(color["x"] + color["w"], bars_max_x)
-
-        for color in colors:
-            x = color["x"]
-            y = color["y"]
-            w = color["w"]
-            h = color["h"]
-
-            cv2.rectangle(legend_for_draw, (x, y), (x + w, y + h), (0, 0, 255), 2)
-
-        cv2.line(legend_for_draw, (bars_max_x, 0), (bars_max_x, legend_for_draw.shape[1]), (255, 0, 0), 2)
 
         legend_without_bars[:, :bars_max_x] = 255
 

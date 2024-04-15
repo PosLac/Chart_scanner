@@ -3,12 +3,11 @@ import math
 import cv2
 import numpy as np
 
-UPSCALE_RATE = 2
+upscale_rate = 1
 NUM_SIZE = 0
 K = -1
 BLOCK_SIZE = 5
 
-resized_gray = None
 resized_color = None
 bars_stats = None
 bars_with_labels = None
@@ -50,19 +49,17 @@ def upscale() -> None:
     Returns:
         None
     """
-    global img_gray, img_color, NUM_SIZE, resized_gray, resized_color
+    global img_gray, img_color, upscale_rate
+    upscale_rate = 1080 / img_color.shape[1]
 
-    height = int(img_gray.shape[0] * UPSCALE_RATE)
-    width = int(img_gray.shape[1] * UPSCALE_RATE)
-
+    height = int(img_color.shape[0] * upscale_rate)
+    width = int(img_color.shape[1] * upscale_rate)
     img_gray = cv2.resize(img_gray, (width, height))
-    NUM_SIZE = img_gray.shape[0] * img_gray.shape[1] / 1000
-    resized_gray = img_gray.copy()
 
-    height = int(img_color.shape[0] * UPSCALE_RATE)
-    width = int(img_color.shape[1] * UPSCALE_RATE)
+    height = int(img_color.shape[0] * upscale_rate)
+    width = int(img_color.shape[1] * upscale_rate)
     img_color = cv2.resize(img_color, (width, height))
-    resized_color = img_color.copy()
+    print(f"\tUpscale image with {upscale_rate}")
 
 
 def ni_black_threshold() -> None:
@@ -89,24 +86,20 @@ def threshold() -> np.ndarray:
     binary.fill(0)
     binary[img_gray < 230] = 255
     cv2.imwrite("A-binary.png", binary)
-    hugh = cv2.Canny(img_gray, 50, 200, None, 3)
+    # hugh = cv2.Canny(img_gray, 50, 200, None, 3)
     return binary
 
 
-def rotate():
+def image_straightening():
     """
     Rotates the picture if not straight
 
     """
-    global binary, UPSCALE_RATE, img_orig_gray, resized_gray, img_gray
+    global binary, img_orig_gray, img_gray, img_color, hugh
 
+    hugh = cv2.Canny(img_gray, 50, 200, None, 3)
     cdst = cv2.cvtColor(hugh, cv2.COLOR_GRAY2BGR)
-
-    lines = None
-    expectation = 200 * UPSCALE_RATE
-    while lines is None or len(lines) < 10:
-        lines = cv2.HoughLines(hugh, 1, np.pi / 50, expectation, None, 0, 0)
-        expectation = expectation - 5
+    lines = cv2.HoughLines(hugh, 1, np.pi / 180, 140, None, 0, 0)
 
     sizemax = math.sqrt(cdst.shape[0] ** 2 + cdst.shape[1] ** 2)
     all_deg = 0
@@ -136,20 +129,27 @@ def rotate():
                 cv2.line(cdst, pt1, pt2, (255, 0, 0), 3, cv2.LINE_AA)
                 all_deg = all_deg + act_deg
 
-    avr = all_deg / len(lines)
-
-    rows, cols = img_gray.shape[:2]
-    m = cv2.getRotationMatrix2D((cols / 2, rows / 2), avr - 90, 1)
-    binary = cv2.warpAffine(binary, m, (cols, rows))
-    resized_gray = cv2.warpAffine(resized_gray, m, (cols, rows))
-    img_gray = cv2.warpAffine(img_gray, m, (cols, rows))
+    average_rotation = all_deg / len(lines)
+    print(f"\tRotate image with {average_rotation}°")
+    if average_rotation - 90 > 50 or average_rotation - 90 < -50:
+        print(f"\tRotation of image is too big, program is unable to straighten it")  # TODO hogyan tovább
+    else:
+        rows, cols = img_gray.shape[:2]
+        m = cv2.getRotationMatrix2D((cols / 2, rows / 2), average_rotation - 90, 1)
+        binary = cv2.warpAffine(binary, m, (cols, rows))
+        img_gray = cv2.warpAffine(img_gray, m, (cols, rows), borderMode=cv2.BORDER_CONSTANT,
+                                  borderValue=(255, 255, 255))
+        img_color = cv2.warpAffine(img_color, m, (cols, rows), borderMode=cv2.BORDER_CONSTANT,
+                                   borderValue=(255, 255, 255))
+        print("Image straightening done")
+    return img_color
 
 
 def morphological_transform(legend_position) -> np.ndarray:
     """
 
     """
-    global bars_img, bars_with_labels, bars_stats
+    global bars_img, bars_with_labels, bars_stats, upscale_rate
 
     img = threshold()
     cv2.imwrite("A-bars_img1.png", img)
@@ -164,10 +164,10 @@ def morphological_transform(legend_position) -> np.ndarray:
 
     # Remove legend bars
     if legend_position:
-        legend_start_x = legend_position.topLeft().x() * UPSCALE_RATE
-        legend_start_y = legend_position.topLeft().y() * UPSCALE_RATE
-        legend_end_x = legend_position.bottomRight().x() * UPSCALE_RATE
-        legend_end_y = legend_position.bottomRight().y() * UPSCALE_RATE
+        legend_start_x = int(legend_position.topLeft().x() * upscale_rate)
+        legend_start_y = int(legend_position.topLeft().y() * upscale_rate)
+        legend_end_x = int(legend_position.bottomRight().x() * upscale_rate)
+        legend_end_y = int(legend_position.bottomRight().y() * upscale_rate)
         bars_img[legend_start_y:legend_end_y, legend_start_x:legend_end_x] = 0
         cv2.imwrite("bars_img.png", bars_img)
 

@@ -624,7 +624,7 @@ def add_value_to_tick_data(numbers_str_array, numbers_data):
     for number in numbers_data:
         x2 = number[0] + number[2] + x_bias
         y2 = number[1] + number[3] + y_bias
-        cv2.putText(edits.resized_gray, str(numbers_str_array[j]), (x2 - x_bias, y2), cv2.QT_FONT_NORMAL, 1, 0, 2)
+        # cv2.putText(edits.resized_gray, str(numbers_str_array[j]), (x2 - x_bias, y2), cv2.QT_FONT_NORMAL, 1, 0, 2)
         centoid_x = np.round(number[0] + (number[2] // 2))
         centoid_y = np.round(number[1] + (number[3] // 2))
         new_number = {

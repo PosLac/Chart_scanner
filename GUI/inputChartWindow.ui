@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1682</width>
+    <width>1744</width>
     <height>982</height>
    </rect>
   </property>
@@ -42,6 +42,42 @@
       <property name="bottomMargin">
        <number>5</number>
       </property>
+      <item row="2" column="0" alignment="Qt::AlignTop">
+       <widget class="QLabel" name="file_name">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>35</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">padding: 5px 10px</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="0" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
        <widget class="InputImageView" name="input_image_view">
         <property name="sizePolicy">
@@ -82,24 +118,21 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0" alignment="Qt::AlignTop">
-       <widget class="QLabel" name="file_name">
+      <item row="3" column="0" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
+       <widget class="QPushButton" name="open_files">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>35</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="font">
@@ -108,13 +141,10 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">padding: 5px 10px</string>
+         <string notr="true">padding: 10px</string>
         </property>
         <property name="text">
-         <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <string>Tallózás</string>
         </property>
        </widget>
       </item>
@@ -151,36 +181,6 @@
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
-       <widget class="QPushButton" name="open_files">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">padding: 10px</string>
-        </property>
-        <property name="text">
-         <string>Tallózás</string>
         </property>
        </widget>
       </item>
@@ -362,7 +362,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1682</width>
+     <width>1744</width>
      <height>26</height>
     </rect>
    </property>
