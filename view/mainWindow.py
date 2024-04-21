@@ -13,8 +13,9 @@ from PyQt5.QtWidgets import QFileDialog, QMainWindow, QPushButton, QLabel, QRadi
 from app import worker
 from config import config
 from .editWindow import EditWindow
-from view.custom_q_graphics_views.qGraphicsViewWithScene import QGraphicsViewWithScene
-from view.custom_q_graphics_views.inputImageQGraphicsView import InputImageQGraphicsView
+from .custom_q_dialog.error_dialog import ErrorDialog
+from .custom_q_graphics_views.qGraphicsViewWithScene import QGraphicsViewWithScene
+from .custom_q_graphics_views.inputImageQGraphicsView import InputImageQGraphicsView
 
 logger = config.logger
 
@@ -27,6 +28,7 @@ class MainWindow(QMainWindow):
     def __init__(self, parent_window):
         super(MainWindow, self).__init__()
         uic.loadUi(str(config.ui_path / "mainWindow.ui"), self)
+        self.setWindowTitle("Diagram generálása")
 
         # variables
         self.legend_bars_data = None
@@ -44,8 +46,6 @@ class MainWindow(QMainWindow):
         self.file_name_label.setText(parent_window.file_name_label.text())
         self.input_image_view = self.findChild(InputImageQGraphicsView, "input_image_view")
         self.input_image_view.setScene(self.input_image_view.scene)
-        self.error_label = self.findChild(QLabel, "error_label")
-        self.error_label.setHidden(True)
 
         # details_group
         self.details_group = self.findChild(QGroupBox, "details_group")  # TODO szükséges?
@@ -98,20 +98,14 @@ class MainWindow(QMainWindow):
         self.worker = worker.Worker(self)
         self.worker_thread = QThread()
         self.worker.moveToThread(self.worker_thread)
-        self.worker.fname.connect(self.update)
-        # self.worker.completed.connect(self.workerCompleted)
         self.main_work_requested.connect(self.worker.create_chart)
         self.auto_straightening_signal.connect(self.worker.auto_straightening)
         self.generation_completed.connect(lambda: self.export_edit_group.setHidden(False))
+        self.worker.error_signal.connect(self.open_modal_dialog)
         self.worker_thread.start()
 
         self.showMaximized()
         logger.info(f"{self.__class__.__name__} inited")
-
-    # def workerCompleted(self):
-    #     print("mainWindow worker completed")
-    #
-    #     self.worker_thread.exit()
 
     def contains_legend_changed(self):
         contains = self.contains_legend.isChecked()
@@ -199,8 +193,7 @@ class MainWindow(QMainWindow):
         return converted_np_image
 
     def auto_straightening(self):
-        self.error_label.setText("")
-        self.error_label.setHidden(True)
+        self.rotate_button.setHidden(False)
         self.legend_group.setHidden(False)
         self.title_group.setHidden(False)
         self.scanButton.setHidden(False)
@@ -212,3 +205,6 @@ class MainWindow(QMainWindow):
         self.input_image_view.set_image(self.input_image_view.image.transformed(QTransform().rotate(90)))
         logger.info(f"Input chart image rotated by 90° on {self.__class__.__name__}")
 
+    def open_modal_dialog(self, error_list):
+        dialog = ErrorDialog(error_list, self)
+        dialog.exec_()

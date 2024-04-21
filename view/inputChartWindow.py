@@ -16,6 +16,8 @@ class InputChartWindow(QMainWindow):
     def __init__(self, parent=None):
         super(InputChartWindow, self).__init__(parent)
         uic.loadUi(str(config.ui_path / "inputChartWindow.ui"), self)
+        self.setWindowTitle("Diagram beolvasása")
+
         self.main_window = None
         self.chart = None
         self.opened_file_path = None

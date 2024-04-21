@@ -11,6 +11,7 @@ logger = config.logger
 
 class QGraphicsViewWithScene(QGraphicsView):
     set_generated_image = pyqtSignal(QPixmap, object, object)
+    set_error_image_signal = pyqtSignal()
     start_spinner_signal = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
@@ -24,9 +25,12 @@ class QGraphicsViewWithScene(QGraphicsView):
         self.optimal_size = 700
         self.image = None
         self.set_generated_image.connect(self.set_image)
+        self.set_error_image_signal.connect(self.set_error_image)
         self.movie = QMovie(str(config.resources_path / "Spin-1s-200px.gif"))
         self.label = None
         self.item = None
+        self.error_pixmap = QPixmap(str(config.resources_path / "corrupted_image_icon.png")).scaled(200, 200,
+                                                                                                    Qt.KeepAspectRatio)
         logger.info(f"{self.__class__.__name__} inited")
 
     def add_label(self):
@@ -41,11 +45,12 @@ class QGraphicsViewWithScene(QGraphicsView):
 
     def set_error_image(self):
         self.scene.clear()
-        self.setFixedSize(200, 200)
-        self.pixmap_item = self.scene.addPixmap(QPixmap())
-        self.image = QPixmap(str(config.resources_path / "corrupted_image_icon.png"))
-        self.pixmap_item.setPixmap(self.image)
-        self.fitInView(self.pixmap_item, Qt.KeepAspectRatio)
+        self.label = QLabel()
+        self.label.setGeometry(0, 0, 200, 200)
+        self.label.setPixmap(self.error_pixmap)
+        self.item = self.scene.addWidget(self.label)
+        self.item.setPos((self.scene.width() - self.label.width()) / 2,
+                         (self.scene.height() - self.label.height()) / 2)
 
     def set_image(self, pixmap, width=None, height=None):
         if width == 0 or height == 0:
@@ -77,4 +82,3 @@ class QGraphicsViewWithScene(QGraphicsView):
         except Exception as e:
             self.set_error_image()
             logger.error("There was an error during image setting to view, setting error image: %s", e)
-

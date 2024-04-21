@@ -14,11 +14,11 @@ logger = config.logger
 
 class EditWindow(QMainWindow):
     edit_work_requested = pyqtSignal(object, object, object)
-    generation_completed = pyqtSignal()
 
     def __init__(self, parent_window):
         super(EditWindow, self).__init__()
         uic.loadUi(str(config.ui_path / "editWindow.ui"), self)
+        self.setWindowTitle("Diagram módosítása")
 
         # variables
         self.input_chart = QPixmap(str(config.generated_charts_path / config.file_name))

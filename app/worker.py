@@ -1,5 +1,6 @@
 import logging
 import os
+import random
 
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QPixmap, QImage
@@ -13,7 +14,7 @@ logger = config.logger
 
 
 class Worker(QObject):
-    fname = pyqtSignal(str)
+    error_signal = pyqtSignal(list)
 
     # completed = pyqtSignal()
 
@@ -25,27 +26,27 @@ class Worker(QObject):
     def create_chart(self, chart, legend, legend_position):
         logger.info("Chart creation started")
         logger.info(f"Contains legend: {legend is not None}")
-
-        if legend is not None:
-            try:
+        try:
+            if legend is not None:
                 self.window.legend_bars_data = image_detections.scan_legend(legend)
                 main_char_detections.start_char_detections(chart, self.window.title_pos, True, False,
                                                            self.window.legend_bars_data, legend_position)
-            except PyLaTeXError as pylatexError:
-                logger.exception("An error occurred during latex file generation to grouped "
-                                                     "chart, can't generate the pdf: %s", pylatexError)
-            except Exception as e:
-                logger.exception("An error occurred during legend detection, can't continue the process.")
-        else:
-            try:
+            else:
                 main_char_detections.start_char_detections(chart, self.window.title_pos, False, False, None, None)
 
-            except PyLaTeXError as pylatexError:
-                logger.exception("An error occurred during latex file generation to simple chart, "
-                                        "can't generate the pdf: %s", pylatexError)
+        except PyLaTeXError as pylatexError:
+            logger.exception(
+                "An error occurred during running of the latex file, can't generate the pdf: %s",
+                pylatexError)
 
-            except Exception:
-                    logger.exception("An error occurred during chart detection, can't continue the detection process.")
+            self.error_signal.emit([f"Hiba történt a generált latex fájl futtatása során: {pylatexError}",
+                                    f"A latex fájlt a {str(config.generated_charts_path / config.file_name)}.tex útvonalon található."])
+            self.window.output_image_view.set_error_image_signal.emit()
+
+        except Exception as e:
+            logger.exception("An error occurred during chart detection, can't continue the process: %s", e)
+            self.error_signal.emit([f"Hiba történt a diagram beolvasása során: {e}"])
+            self.window.output_image_view.set_error_image_signal.emit()
 
         os.system(str(config.convert_pdf_to_png_bat_file_path)
                   + " "
@@ -70,10 +71,17 @@ class Worker(QObject):
                                                  self.window.title_str, self.window.title_pos)
             logger.info("Update of chart finished successfully")
 
-        except Exception as e:
-            logger.exception("An error occurred during chart update: %s", e)
+        except PyLaTeXError as pylatexError:
+            logger.exception(
+                "An error occurred during running of the latex file, can't generate the pdf: %s",
+                pylatexError)
 
-        # os.system(str(config.convert_pdf_to_png_bat_file_path + " " + config.file_name + "300"))
+            self.error_signal.emit([f"Hiba történt a generált latex fájl futtatása során: {pylatexError}",
+                                    f"A latex fájlt a {str(config.generated_charts_path / config.file_name)}.tex útvonalon található."])
+
+        except Exception as e:
+            logger.exception("An error occurred during chart update, can't continue the proces: %s", e)
+            self.error_signal.emit([f"Hiba történt a diagram módosítása során: {e}"])
 
         os.system(str(config.convert_pdf_to_png_bat_file_path)
                   + " "
@@ -81,15 +89,22 @@ class Worker(QObject):
                   + " "
                   + str(DEFAULT_DENSITY))
 
-        # self.window.output_image_view.set_generated_image.emit(QPixmap(config.file_name + ".png"))
-
         self.window.output_image_view.set_generated_image.emit(
             QPixmap(str(config.generated_charts_path / config.file_name) + ".png")
             , None
             , None)
 
     @pyqtSlot(object)
-    def auto_straightening(self, chart):
+    def auto_straightening(self, chart) -> None:
+        """
+        pyqtSlot, which calls the function responsible for straighten the input image
+
+        Args:
+            chart: input image containing the chart to straighten
+
+        Returns:
+            None
+        """
         try:
             straightened_chart = main_char_detections.start_char_detections(chart.copy(), None, None, True, None, None)
             height, width, _ = straightened_chart.shape
@@ -98,13 +113,12 @@ class Worker(QObject):
                 QImage(straightened_chart.data, width, height, bytes_per_line, QImage.Format_BGR888))
             self.window.input_image_view.set_generated_image.emit(straightened_chart_pixmap, None, None)
 
-        except Exception:
-            logging.exception("An error occurred during auto straightening.")
-            self.window.error_label.setHidden(False)
-            self.window.error_label.setText("Hiba történt az automatikus egyenesítés során.")
-            self.window.input_image_view.set_generated_image.emit(
-                QPixmap(str(config.resources_path / "corrupted_image_icon.png")), 200, 200)
+        except Exception as e:
+            logging.exception("An error occurred during auto straightening: %s", e)
+            self.error_signal.emit([f"Hiba történt az automatikus kiegyenesítés során: {e}",
+                                    "Próbálja meg manuálisan kiegyenesíteni a képet, hogy a program felismerhesse."])
+            self.window.input_image_view.set_error_image_signal.emit()
+            self.window.rotate_button.setHidden(True)
             self.window.legend_group.setHidden(True)
             self.window.title_group.setHidden(True)
             self.window.scanButton.setHidden(True)
-            # self.window.details_group.setHidden(True)
