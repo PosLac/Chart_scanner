@@ -8,6 +8,7 @@ from pylatex.errors import PyLaTeXError
 from app import axis_detections, image_detections, legend_detections
 from config import config
 
+DEFAULT_LEGEND_POSITION = 0.95
 logger = config.logger
 
 
@@ -24,12 +25,12 @@ def prepare_universal_data(chart_type, bgr_color_data, title, legend_position=No
 
     # Set text ticks
     if image_detections.text_for_axis:
-        if image_detections.orientation == "xbar":
-            image_detections.text_for_axis = image_detections.text_for_axis[::-1]
+        # if image_detections.orientation == "xbar":
+        #     image_detections.text_for_axis = image_detections.text_for_axis[::-1]
 
         plot_options_array.append(
             "symbolic " + ("x" if image_detections.orientation == "ybar" else "y") + " coords={" + ", ".join(
-                ["{" + t['value'] + "}" for t in image_detections.text_for_axis]) + "}")
+                ["{" + t['value'] + "}" for t in image_detections.text_for_axis][::-1]) + "}")
 
         if image_detections.orientation == "xbar":
             plot_options_array.append("ytick=data")
@@ -111,6 +112,7 @@ def prepare_data_for_update(chart_type, colors, legend_position=None, title=None
 
 
 def prepare_data_for_grouped_chart(plot_options_array, legend_position, texts_and_colors):
+    legend_arguments = ""
     define_color_arguments = []
     coordinates_with_options = []
     top_right_point = legend_detections.chart_border_polygon_resized[1]
@@ -119,13 +121,23 @@ def prepare_data_for_grouped_chart(plot_options_array, legend_position, texts_an
     width = top_right_point[0] - bottom_left_point[0]
     height = bottom_left_point[1] - top_right_point[1]
 
-    legend_arguments = ""
-    legend_top_right_orig = legend_position.topRight()
+    if width == 0 or height == 0:
+        legend_top_right = DEFAULT_LEGEND_POSITION, DEFAULT_LEGEND_POSITION
+    else:
+        legend_top_right_orig = legend_position.topRight()
 
-    from_x = min(round(1 - (top_right_point[0] - legend_top_right_orig.x()) / width, 2), 1)
-    from_y = min(round(1 - (legend_top_right_orig.y() - top_right_point[1]) / height, 2), 1)
+        from_x = min(round(1 - (top_right_point[0] - legend_top_right_orig.x()) / width, 2), 1)
+        from_y = min(round(1 - (legend_top_right_orig.y() - top_right_point[1]) / height, 2), 1)
 
-    legend_top_right = from_x, from_y
+        if not 0 < from_x < 1:
+            from_x = DEFAULT_LEGEND_POSITION
+
+        if not 0 < from_y < 1:
+            from_y = DEFAULT_LEGEND_POSITION
+
+        legend_top_right = from_x, from_y
+    logger.info(f"Detected legend position: {str(legend_arguments)}")
+
     plot_options_array.append("legend style={at={" + str(legend_top_right) + "}}")
     plot_options_array.append("legend cell align={left}")
     # image_detections.print_array("plot_options", plot_options_array)
@@ -142,7 +154,7 @@ def prepare_data_for_grouped_chart(plot_options_array, legend_position, texts_an
             define_color_arguments.append(["color" + str(i + 1), "RGB", color_str])
         legend_arguments = ", ".join(texts_and_colors.keys())
 
-    logger.info(f"legend_arguments: {legend_arguments}")
+    logger.info(f"legend_arguments: [{legend_arguments}]")
 
     bias = []
     length = len(image_detections.bars_with_axis_value_pairs.values())

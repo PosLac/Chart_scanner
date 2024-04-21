@@ -200,6 +200,12 @@
     </item>
     <item row="1" column="3">
      <widget class="QGroupBox" name="details_group">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>800</height>
+       </size>
+      </property>
       <property name="title">
        <string>Beállítások</string>
       </property>

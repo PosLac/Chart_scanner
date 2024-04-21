@@ -269,7 +269,7 @@ def detect_if_chart_is_stacked(grouped_bars_by_ticks):
 
     if groups > 1:
         stacked = True
-
+    logger.info(f"{'Grouped' if not stacked else 'Stacked'} chart type is detected")
     return stacked
 
 

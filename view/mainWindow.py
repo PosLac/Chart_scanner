@@ -125,7 +125,8 @@ class MainWindow(QMainWindow):
         if contains:
             self.crop_legend_label.setText("Kijelölt jelmagyarázat:")
             self.cropped_legend.setHidden(False)
-            scaled_pixmap = pixmap.scaledToWidth(400, Qt.SmoothTransformation)
+            scaled_pixmap = pixmap.scaled(400, min(pixmap.height(), 500), Qt.KeepAspectRatio)
+
             self.cropped_legend.setPixmap(scaled_pixmap)
             self.legend_pixmap = pixmap
 
@@ -193,11 +194,11 @@ class MainWindow(QMainWindow):
         return converted_np_image
 
     def auto_straightening(self):
+        self.set_loading_screen_on_input()
         self.rotate_button.setHidden(False)
         self.legend_group.setHidden(False)
         self.title_group.setHidden(False)
         self.scanButton.setHidden(False)
-        self.set_loading_screen_on_input()
         chart_image_np = self.convert_pixmap_to_image(self.input_image_view.image)
         self.auto_straightening_signal.emit(chart_image_np) #TODO logger
 

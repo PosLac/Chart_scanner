@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QMainWindow, QRadioButton, QLineEdit, QPushButton, Q
 
 from app import axis_detections, worker, image_detections
 from config import config
+from view.custom_q_dialog.error_dialog import ErrorDialog
 from view.custom_q_graphics_views.qGraphicsViewWithScene import QGraphicsViewWithScene
 
 logger = config.logger
@@ -77,7 +78,7 @@ class EditWindow(QMainWindow):
         # workers
         self.worker = worker.Worker(self)
         self.worker_thread = QThread()
-        self.worker.fname.connect(self.update)
+        # self.worker.fname.connect(self.update)
         self.edit_work_requested.connect(self.worker.update_chart)
         self.worker.moveToThread(self.worker_thread)
         self.worker_thread.start()
@@ -163,7 +164,7 @@ class EditWindow(QMainWindow):
                 self.bgr_colors = color.getRgb()[:3][::-1]
 
     @pyqtSlot()
-    def set_loading_sceen(self):
+    def set_loading_screen(self):
         self.output_image_view.add_label()
 
     def set_title_data(self):
@@ -187,7 +188,7 @@ class EditWindow(QMainWindow):
 
         if len(self.error_list) == 0:
             logger.info("Update started")
-            self.set_loading_sceen()
+            self.set_loading_screen()
             self.edit_work_requested.emit(self.bgr_colors, self.legend_image_bgr, self.legend_position)
             logger.info("Update finished")
 
@@ -218,3 +219,7 @@ class EditWindow(QMainWindow):
     def back_to_main(self):
         self.close()
         self.parent_window.showMaximized()
+
+    def open_modal_dialog(self, error_list):
+        dialog = ErrorDialog(error_list, self)
+        dialog.exec_()

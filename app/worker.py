@@ -29,10 +29,27 @@ class Worker(QObject):
         try:
             if legend is not None:
                 self.window.legend_bars_data = image_detections.scan_legend(legend)
-                main_char_detections.start_char_detections(chart, self.window.title_pos, True, False,
-                                                           self.window.legend_bars_data, legend_position)
+                if len(self.window.legend_bars_data) == 0:
+                    logger.exception("Can't detect bars on legend, can't continue the detection process.")
+                    raise Exception(
+                        "Nem lehet beolvasni a kijelölt jelmagyarázatot, próbálkozzon minél pontosabb kijelöléssel.")
+                else:
+                    main_char_detections.start_char_detections(chart, self.window.title_pos, True, False,
+                                                               self.window.legend_bars_data, legend_position)
             else:
+                logger.info("Simple chart type detected")
                 main_char_detections.start_char_detections(chart, self.window.title_pos, False, False, None, None)
+
+            os.system(str(config.convert_pdf_to_png_bat_file_path)
+                      + " "
+                      + str(config.generated_charts_path / config.file_name)
+                      + " "
+                      + str(DEFAULT_DENSITY))
+
+            self.window.output_image_view.set_generated_image.emit(
+                QPixmap(str(config.generated_charts_path / config.file_name) + ".png")
+                , None
+                , None)
 
         except PyLaTeXError as pylatexError:
             logger.exception(
@@ -48,16 +65,6 @@ class Worker(QObject):
             self.error_signal.emit([f"Hiba történt a diagram beolvasása során: {e}"])
             self.window.output_image_view.set_error_image_signal.emit()
 
-        os.system(str(config.convert_pdf_to_png_bat_file_path)
-                  + " "
-                  + str(config.generated_charts_path / config.file_name)
-                  + " "
-                  + str(DEFAULT_DENSITY))
-
-        self.window.output_image_view.set_generated_image.emit(
-            QPixmap(str(config.generated_charts_path / config.file_name) + ".png")
-            , None
-            , None)
         self.window.generation_completed.emit()
 
     @pyqtSlot(object, object, object)

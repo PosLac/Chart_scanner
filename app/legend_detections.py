@@ -2,8 +2,7 @@ import cv2
 import numpy as np
 import pytesseract
 from pytesseract import Output
-import app.image_detections as detects
-from app import image_edits as edits, color_detections, image_detections
+from app import image_edits, color_detections, image_detections, axis_detections
 
 chart_border_polygon_resized = None
 
@@ -46,7 +45,7 @@ def morph_transform_for_legend(img):
 
 
 def detect_legend_texts(bars_max_x):
-    legend_orig = detects.legend_without_bars
+    legend_orig = image_detections.legend_without_bars
 
     # cv2.imwrite("legend_orig.png", legend_orig)
     legend_gray = cv2.cvtColor(legend_orig, cv2.COLOR_BGR2GRAY)
@@ -161,10 +160,9 @@ def detect_legend_position() -> None:
     """
     global chart_border_polygon_resized
 
-    _, thresholded = cv2.threshold(edits.img_gray, 220, 255, cv2.THRESH_BINARY)
+    _, thresholded = cv2.threshold(image_edits.img_gray, 220, 255, cv2.THRESH_BINARY)
     contours, hierarchy = cv2.findContours(thresholded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    bounding_rect_contour = None
-    min_area = (edits.img_gray.shape[0] * edits.img_gray.shape[1]) * 0.3
+    min_area = (image_edits.img_gray.shape[0] * image_edits.img_gray.shape[1]) * 0.3
 
     filtered_contours = []
     for i in range(len(contours)):
@@ -172,13 +170,20 @@ def detect_legend_position() -> None:
             filtered_contours.append(contours[i])
 
     chart_border_contour = sorted(filtered_contours, key=lambda x: cv2.contourArea(x), reverse=True)[0]
+    epsilon = 30
+    i = 0
+    chart_border_poligon = []
 
-    chart_border_poligon = cv2.approxPolyDP(chart_border_contour, 10, True)
+    while len(chart_border_poligon) != 4 and i < 100:
+        chart_border_poligon = cv2.approxPolyDP(chart_border_contour, epsilon, True)
+        epsilon += 30
+
     chart_border_polygon_resized = []
+
     for point in chart_border_poligon:
         chart_border_polygon_resized.append(
-            [int(point[0][0] // edits.upscale_rate),
-             int(point[0][1] // edits.upscale_rate)])
+            [int(point[0][0] // image_edits.upscale_rate),
+             int(point[0][1] // image_edits.upscale_rate)])
 
 
 def add_text_to_bars(bars, legend_bars):
