@@ -2,8 +2,10 @@ import cv2
 import numpy as np
 import pytesseract
 from pytesseract import Output
-from app import image_edits, color_detections, image_detections, axis_detections
+from app import image_edits, color_detections, image_detections
+from config import config
 
+logger = config.logger
 chart_border_polygon_resized = None
 
 
@@ -160,6 +162,7 @@ def detect_legend_position() -> None:
     """
     global chart_border_polygon_resized
 
+    chart_border_polygon_resized = []
     _, thresholded = cv2.threshold(image_edits.img_gray, 220, 255, cv2.THRESH_BINARY)
     contours, hierarchy = cv2.findContours(thresholded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     min_area = (image_edits.img_gray.shape[0] * image_edits.img_gray.shape[1]) * 0.3
@@ -177,8 +180,11 @@ def detect_legend_position() -> None:
     while len(chart_border_poligon) != 4 and i < 100:
         chart_border_poligon = cv2.approxPolyDP(chart_border_contour, epsilon, True)
         epsilon += 30
+        i += 1
 
-    chart_border_polygon_resized = []
+    if len(chart_border_poligon) != 4:
+        logger.error("Can't detect chart border, use default legend position")
+        raise Exception("Can't detect chart border, use default legend position")
 
     for point in chart_border_poligon:
         chart_border_polygon_resized.append(

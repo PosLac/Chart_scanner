@@ -3,7 +3,6 @@ from datetime import datetime
 from pylatex import (Document, TikZ, TikZNode,
                      TikZOptions,
                      Axis, Plot, Command, NoEscape)
-from pylatex.errors import PyLaTeXError
 
 from app import axis_detections, image_detections, legend_detections
 from config import config
@@ -25,12 +24,15 @@ def prepare_universal_data(chart_type, bgr_color_data, title, legend_position=No
 
     # Set text ticks
     if image_detections.text_for_axis:
-        # if image_detections.orientation == "xbar":
-        #     image_detections.text_for_axis = image_detections.text_for_axis[::-1]
+        if image_detections.orientation == "xbar":
+            plot_options_array.append(
+                "symbolic " + ("x" if image_detections.orientation == "ybar" else "y") + " coords={" + ", ".join(
+                    ["{" + t['value'] + "}" for t in image_detections.text_for_axis][::-1]) + "}")
 
-        plot_options_array.append(
-            "symbolic " + ("x" if image_detections.orientation == "ybar" else "y") + " coords={" + ", ".join(
-                ["{" + t['value'] + "}" for t in image_detections.text_for_axis][::-1]) + "}")
+        elif image_detections.orientation == "ybar":
+            plot_options_array.append(
+                "symbolic " + ("x" if image_detections.orientation == "ybar" else "y") + " coords={" + ", ".join(
+                    ["{" + t['value'] + "}" for t in image_detections.text_for_axis]) + "}")
 
         if image_detections.orientation == "xbar":
             plot_options_array.append("ytick=data")
@@ -115,27 +117,31 @@ def prepare_data_for_grouped_chart(plot_options_array, legend_position, texts_an
     legend_arguments = ""
     define_color_arguments = []
     coordinates_with_options = []
-    top_right_point = legend_detections.chart_border_polygon_resized[1]
-    bottom_left_point = legend_detections.chart_border_polygon_resized[3]
 
-    width = top_right_point[0] - bottom_left_point[0]
-    height = bottom_left_point[1] - top_right_point[1]
-
-    if width == 0 or height == 0:
+    if len(legend_detections.chart_border_polygon_resized) == 0:
         legend_top_right = DEFAULT_LEGEND_POSITION, DEFAULT_LEGEND_POSITION
     else:
-        legend_top_right_orig = legend_position.topRight()
+        top_right_point = legend_detections.chart_border_polygon_resized[1]
+        bottom_left_point = legend_detections.chart_border_polygon_resized[3]
 
-        from_x = min(round(1 - (top_right_point[0] - legend_top_right_orig.x()) / width, 2), 1)
-        from_y = min(round(1 - (legend_top_right_orig.y() - top_right_point[1]) / height, 2), 1)
+        width = top_right_point[0] - bottom_left_point[0]
+        height = bottom_left_point[1] - top_right_point[1]
 
-        if not 0 < from_x < 1:
-            from_x = DEFAULT_LEGEND_POSITION
+        if width == 0 or height == 0:
+            legend_top_right = DEFAULT_LEGEND_POSITION, DEFAULT_LEGEND_POSITION
+        else:
+            legend_top_right_orig = legend_position.topRight()
 
-        if not 0 < from_y < 1:
-            from_y = DEFAULT_LEGEND_POSITION
+            from_x = min(round(1 - (top_right_point[0] - legend_top_right_orig.x()) / width, 2), 1)
+            from_y = min(round(1 - (legend_top_right_orig.y() - top_right_point[1]) / height, 2), 1)
 
-        legend_top_right = from_x, from_y
+            if not 0 < from_x < 1:
+                from_x = DEFAULT_LEGEND_POSITION
+
+            if not 0 < from_y < 1:
+                from_y = DEFAULT_LEGEND_POSITION
+
+            legend_top_right = from_x, from_y
     logger.info(f"Detected legend position: {str(legend_arguments)}")
 
     plot_options_array.append("legend style={at={" + str(legend_top_right) + "}}")

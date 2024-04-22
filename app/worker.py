@@ -1,6 +1,6 @@
 import logging
 import os
-import random
+from subprocess import CalledProcessError
 
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QPixmap, QImage
@@ -51,13 +51,13 @@ class Worker(QObject):
                 , None
                 , None)
 
-        except PyLaTeXError as pylatexError:
+        except (PyLaTeXError, CalledProcessError) as pylatexError:
             logger.exception(
                 "An error occurred during running of the latex file, can't generate the pdf: %s",
                 pylatexError)
 
             self.error_signal.emit([f"Hiba történt a generált latex fájl futtatása során: {pylatexError}",
-                                    f"A latex fájlt a {str(config.generated_charts_path / config.file_name)}.tex útvonalon található."])
+                                    f"A latex fájl a {str(config.generated_charts_path / config.file_name)}.tex útvonalon található."])
             self.window.output_image_view.set_error_image_signal.emit()
 
         except Exception as e:
@@ -84,7 +84,7 @@ class Worker(QObject):
                 pylatexError)
 
             self.error_signal.emit([f"Hiba történt a generált latex fájl futtatása során: {pylatexError}",
-                                    f"A latex fájlt a {str(config.generated_charts_path / config.file_name)}.tex útvonalon található."])
+                                    f"A latex fájl a {str(config.generated_charts_path / config.file_name)}.tex útvonalon található."])
 
         except Exception as e:
             logger.exception("An error occurred during chart update, can't continue the proces: %s", e)
