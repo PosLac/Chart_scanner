@@ -1,0 +1,41 @@
+\documentclass{standalone}%
+\usepackage[T1]{fontenc}%
+\usepackage[utf8]{inputenc}%
+\usepackage{lmodern}%
+\usepackage{textcomp}%
+\usepackage{lastpage}%
+\usepackage{tikz}%
+\usepackage{pgfplots}%
+\pgfplotsset{compat=newest}%
+%
+\usetikzlibrary{positioning}%
+%
+\begin{document}%
+	\normalsize%
+	\begin{tikzpicture}%
+		\definecolor{color}{RGB}{178, 178, 255}%
+		\begin{axis}[
+			xbar, 
+			name=barchart, 
+			title=Usage of smart gadgets,
+			symbolic y coords={
+				{Smart Thermostats}, 
+				{Smart Watches}, 
+				{Tablets}, 
+				{Smart TVs}, 
+				{Smartphones}},
+			ytick=data,
+			xmin=0, 
+			xmax=100]%
+			\addplot[fill=color] coordinates {%
+				({90.59},{Smartphones})%
+				({79.34},{Smart TVs})%
+				({78.73},{Tablets})%
+				({69.37},{Smart Watches})%
+				({51.55},{Smart Thermostats})%
+			};%
+			%
+			%
+		\end{axis}%
+	\end{tikzpicture}%
+\end{document}

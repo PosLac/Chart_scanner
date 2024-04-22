@@ -1,0 +1,37 @@
+\documentclass{standalone}%
+\usepackage[T1]{fontenc}%
+\usepackage[utf8]{inputenc}%
+\usepackage{lmodern}%
+\usepackage{textcomp}%
+\usepackage{lastpage}%
+\usepackage{tikz}%
+\usepackage{pgfplots}%
+\pgfplotsset{compat=newest}%
+%
+\usetikzlibrary{positioning}%
+%
+\begin{document}%
+	\normalsize%
+	\begin{tikzpicture}%
+		\definecolor{color1}{RGB}{255, 85, 255}%
+		\begin{axis}[
+			xbar, 
+			name=mygraph, 
+			title=Title,
+			xmin=0,
+			ymin=0,
+			xmax=3000, 
+			ymax=120]%
+			\addplot[fill=color1] coordinates {%
+				(2125,12)%
+				(2500,35)%
+				(525,55)
+				(2200,75)%
+				(1400,95)%
+				(250,110)%
+			};%
+			%
+			%
+		\end{axis}%
+	\end{tikzpicture}%
+\end{document}

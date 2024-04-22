@@ -1,0 +1,36 @@
+\documentclass{standalone}%
+\usepackage[T1]{fontenc}%
+\usepackage[utf8]{inputenc}%
+\usepackage{lmodern}%
+\usepackage{textcomp}%
+\usepackage{lastpage}%
+\usepackage{tikz}%
+\usepackage{pgfplots}%
+\pgfplotsset{compat=newest}%
+%
+\usetikzlibrary{positioning}%
+%
+\begin{document}%
+	\normalsize%
+	\begin{tikzpicture}%
+		\definecolor{color}{RGB}{178, 178, 255}%
+		\begin{axis}[
+			xbar,
+			name=barchart, 
+			ymin=0, 
+			ymax=6, 
+			xmin=0, 
+			xmax=6]%
+			\addplot[fill=color] coordinates {%
+				({5.0},{5.0})%
+				({2.0},{4.0})%
+				({1.5},{3.0})%
+				({0.5},{2.0})%
+				({3.0},{1.0})%
+			};%
+			%
+			%
+		\end{axis}%
+		\node[below =of barchart] {Long horizontal chart title};%
+	\end{tikzpicture}%
+\end{document}

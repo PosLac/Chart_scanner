@@ -1,0 +1,33 @@
+\documentclass{standalone}%
+\usepackage[T1]{fontenc}%
+\usepackage[utf8]{inputenc}%
+\usepackage{lmodern}%
+\usepackage{textcomp}%
+\usepackage{lastpage}%
+\usepackage{tikz}%
+\usepackage{pgfplots}%
+\pgfplotsset{compat=newest}%
+%
+\usetikzlibrary{positioning}%
+%
+\begin{document}%
+	\normalsize%
+	\begin{tikzpicture}%
+		\definecolor{color}{RGB}{178, 178, 255}%
+		\begin{axis}[xbar, 
+			name=barchart, 
+			symbolic y coords={{A}, {B}, {C}, {D}}, 
+			ytick=data, 
+			xmin=0,
+			xmax=50]%
+			\addplot[fill=color] coordinates {%
+				({30},{D})%
+				({39.98},{C})%
+				({19.98},{B})%
+				({9.95},{A})%
+			};%
+			%
+			%
+		\end{axis}%
+	\end{tikzpicture}%
+\end{document}
