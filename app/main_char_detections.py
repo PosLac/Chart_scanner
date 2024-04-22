@@ -45,9 +45,11 @@ def start_char_detections(chart, title_pos, grouped, straightening, legend_bars_
 
     try:
         image_edits.get_bar_stats(legend_position)
-    except Exception:
+    except Exception as e:
         logger.exception(
-            "An error had occurred during bar stat extraction image, can't continue the detection process")
+            "An error had occurred during bar stat extraction image, can't continue the detection process: %s", e)
+        raise Exception("Hiba történt az oszlopok detektálása során, próbálja meg kiegyenesíteni a képet.")
+
 
     if grouped:
         logger.info("Start legend detections")

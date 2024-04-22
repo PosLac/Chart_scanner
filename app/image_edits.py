@@ -146,5 +146,8 @@ def get_bar_stats(legend_position) -> np.ndarray:
 
     # Remove background
     bars_stats = np.delete(bars_stats, 0, 0)
+
+    if len(bars_stats) == 0:
+        raise Exception("Can't detect bars on the image")
     # logger.info(f"Stats of bars: {bars_stats}")
     return bars_stats

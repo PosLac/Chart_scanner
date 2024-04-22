@@ -156,13 +156,13 @@
        <widget class="QGroupBox" name="title_layout">
         <property name="font">
          <font>
-          <pointsize>12</pointsize>
+          <pointsize>8</pointsize>
           <italic>false</italic>
           <underline>false</underline>
          </font>
         </property>
         <property name="title">
-         <string/>
+         <string>Cím</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_5">
          <item row="3" column="0" colspan="2">
@@ -282,9 +282,6 @@
         </property>
        </spacer>
       </item>
-      <item row="5" column="0">
-       <layout class="QGridLayout" name="color_layout"/>
-      </item>
       <item row="0" column="0">
        <widget class="QLabel" name="input_title">
         <property name="sizePolicy">
@@ -327,17 +324,22 @@
        <widget class="QGroupBox" name="min_max_layout">
         <property name="font">
          <font>
-          <pointsize>12</pointsize>
+          <pointsize>8</pointsize>
          </font>
         </property>
         <property name="title">
-         <string/>
+         <string>Tengelyek minimum/maximum értéke</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_4">
          <item row="0" column="1">
-          <widget class="QSpinBox" name="xMin">
+          <widget class="QSpinBox" name="x_min_spin_box">
            <property name="enabled">
             <bool>true</bool>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -351,9 +353,14 @@
           </widget>
          </item>
          <item row="3" column="1">
-          <widget class="QSpinBox" name="yMin">
+          <widget class="QSpinBox" name="y_min_spin_box">
            <property name="enabled">
             <bool>true</bool>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -367,30 +374,50 @@
           </widget>
          </item>
          <item row="3" column="0">
-          <widget class="QLabel" name="label_3">
+          <widget class="QLabel" name="y_min_label">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Y-tengely minimum értéke</string>
            </property>
           </widget>
          </item>
          <item row="4" column="0">
-          <widget class="QLabel" name="label_4">
+          <widget class="QLabel" name="y_max_label">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Y-tengely maximum értéke</string>
            </property>
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_2">
+          <widget class="QLabel" name="x_max_label">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>X-tengely maximum értéke</string>
            </property>
           </widget>
          </item>
          <item row="4" column="1">
-          <widget class="QSpinBox" name="yMax">
+          <widget class="QSpinBox" name="y_max_spin_box">
            <property name="enabled">
             <bool>true</bool>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -404,16 +431,26 @@
           </widget>
          </item>
          <item row="0" column="0">
-          <widget class="QLabel" name="label">
+          <widget class="QLabel" name="x_min_label">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>X-tengely minimum értéke</string>
            </property>
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QSpinBox" name="xMax">
+          <widget class="QSpinBox" name="x_max_spin_box">
            <property name="enabled">
             <bool>true</bool>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -448,7 +485,7 @@
          <string/>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
-         <item row="3" column="1" colspan="2" alignment="Qt::AlignRight|Qt::AlignVCenter">
+         <item row="2" column="1" colspan="2" alignment="Qt::AlignRight|Qt::AlignVCenter">
           <widget class="QPushButton" name="back">
            <property name="font">
             <font>
@@ -463,32 +500,7 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="0" colspan="3">
-          <widget class="QLabel" name="error_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(222, 0, 0);
-background-color: rgb(218, 218, 218);</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0" alignment="Qt::AlignLeft|Qt::AlignVCenter">
+         <item row="2" column="0" alignment="Qt::AlignLeft|Qt::AlignVCenter">
           <widget class="QPushButton" name="update_button">
            <property name="font">
             <font>
@@ -518,6 +530,9 @@ background-color: rgb(218, 218, 218);</string>
          </size>
         </property>
        </spacer>
+      </item>
+      <item row="5" column="0">
+       <layout class="QGridLayout" name="color_layout"/>
       </item>
      </layout>
     </item>
@@ -554,7 +569,7 @@ background-color: rgb(218, 218, 218);</string>
    <extends>QGraphicsView</extends>
    <header location="global">/view/custom_q_graphics_views/qGraphicsViewWithScene</header>
   </customwidget>
-  </customwidgets>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

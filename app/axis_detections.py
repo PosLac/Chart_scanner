@@ -49,6 +49,7 @@ def define_tick_type_for_axis(title_pos):
 
     # Remove background
     stats = np.delete(stats, 0, 0)
+    image_detections.define_orientation()
     isolated_y_axis, isolated_x_axis = isolate_x_y(stats)
     get_average_character_height(isolated_y_axis)
     image_detections.chart_title = None
@@ -71,7 +72,6 @@ def define_tick_type_for_axis(title_pos):
     sorted_x_axis_data = group_by_axis(isolated_x_axis, threshold, True)
     threshold = round(average_character_height * 0.6, 3)
     merged_x_axis_ticks = merge_tick_characters(sorted_x_axis_data, threshold)
-    image_detections.define_orientation()
 
     y_axis_type, corrected_y_axis_ticks = define_axis_type(merged_y_axis_ticks, merged_x_axis_ticks, only_ticks_img)
     logger.info(f"Y axis ticks after correction: {corrected_y_axis_ticks}")
@@ -236,19 +236,33 @@ def isolate_x_y(stats):
     row_nums = []
 
     # Searching in the left-side for y-axis and bottom for x-axis of the picture
-    bottom_bar = max(edits.bars_stats, key=lambda x: x[1] + x[3])
-    upper_y_for_row = bottom_bar[1] + bottom_bar[3]
     left_x_for_column = min(edits.bars_stats[:, 0])
 
-    for stat in stats:
-        x_end = stat[0] + stat[2]
-        y_start = stat[1]
+    start_of_bars = max(edits.bars_stats, key=lambda x: x[1] + x[3])
+    upper_y_for_row = start_of_bars[1] + start_of_bars[3]
 
-        if y_start > upper_y_for_row:
-            row_nums.append(stat)
+    if image_detections.orientation == "xbar":
+        for stat in stats:
+            x_end = stat[0] + stat[2]
+            y_start = stat[1]
 
-        elif x_end < left_x_for_column:
-            col_nums.append(stat)
+            if x_end < left_x_for_column:
+                col_nums.append(stat)
+
+            elif y_start > upper_y_for_row:
+                row_nums.append(stat)
+
+    elif image_detections.orientation == "ybar":
+
+        for stat in stats:
+            x_end = stat[0] + stat[2]
+            y_start = stat[1]
+
+            if y_start > upper_y_for_row:
+                row_nums.append(stat)
+
+            elif x_end < left_x_for_column:
+                col_nums.append(stat)
 
     return col_nums, row_nums
 
@@ -330,6 +344,8 @@ def calculate_average_tick_step(tick_data, for_str_array):
         if values[i] != "" and values[i + 1] != "":
             steps.append(values[i + 1] - values[i])
 
+    if len(steps) == 0:
+        raise Exception("Can't calculate the step values") #TODO magyar hibaüzenet
     unique_steps, counts = np.unique(steps, axis=0, return_counts=True)
 
     corrected_step = [x for _, x in sorted(zip(counts, unique_steps), reverse=True)][0]

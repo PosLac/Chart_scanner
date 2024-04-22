@@ -40,10 +40,10 @@ class EditWindow(QMainWindow):
         self.chart_type = image_detections.chart_type
         self.axis_types_with_ticks = axis_detections.axis_types_with_ticks
 
-        # color_layout
+        # color_group
         self.color_layout = self.findChild(QGridLayout, "color_layout")
 
-        # title_layout
+        # title_group
         self.above = self.findChild(QRadioButton, "above")
         self.below = self.findChild(QRadioButton, "below")
         self.no_title = self.findChild(QRadioButton, "no_title")
@@ -53,21 +53,28 @@ class EditWindow(QMainWindow):
         self.below.setChecked(self.parent_window.below.isChecked())
         self.no_title.setChecked(self.parent_window.no_title.isChecked())
 
-        # min_max_layout
-        self.xMin = self.findChild(QSpinBox, "xMin")
-        self.xMax = self.findChild(QSpinBox, "xMax")
-        self.yMin = self.findChild(QSpinBox, "yMin")
-        self.yMax = self.findChild(QSpinBox, "yMax")
+        # min_max_group
+        self.x_max_label = self.findChild(QLabel, "x_max_label")
+        self.x_max_spin_box = self.findChild(QSpinBox, "x_max_spin_box")
+
+        self.x_min_label = self.findChild(QLabel, "x_min_label")
+        self.x_min_spin_box = self.findChild(QSpinBox, "x_min_spin_box")
+
+        self.y_max_label = self.findChild(QLabel, "y_max_label")
+        self.y_max_spin_box = self.findChild(QSpinBox, "y_max_spin_box")
+
+        self.y_min_label = self.findChild(QLabel, "y_min_label")
+        self.y_min_spin_box = self.findChild(QSpinBox, "y_min_spin_box")
         self.init_min_max_values()
 
-        # bottom_layout
-        self.error_label = self.findChild(QLabel, "error_label")
+        # bottom_group
+        # self.error_label = self.findChild(QLabel, "error_label")
         self.update_button = self.findChild(QPushButton, "update_button")
         self.back_button = self.findChild(QPushButton, "back")
         self.update_button.clicked.connect(self.update_chart)
         self.back_button.clicked.connect(self.back_to_main)
 
-        # output_layout
+        # output_group
         self.output_image_view = self.findChild(QGraphicsViewWithScene, "output_view")
         self.output_image_view.setScene(self.output_image_view.scene)
         self.export_button_pdf = self.findChild(QPushButton, "export_button_pdf")
@@ -89,33 +96,43 @@ class EditWindow(QMainWindow):
 
     def init_min_max_values(self):
         if self.axis_types_with_ticks["y_axis_type"] == "number":
-            self.yMax.setHidden(False)
-            self.yMin.setHidden(False)
-            self.yMax.setValue(self.axis_types_with_ticks["y_axis_max"])
-            self.yMin.setValue(self.axis_types_with_ticks["y_axis_min"])
+            self.y_min_label.setHidden(False)
+            self.y_min_spin_box.setHidden(False)
+            self.y_min_spin_box.setValue(self.axis_types_with_ticks["y_axis_min"])
+
+            self.y_max_label.setHidden(False)
+            self.y_max_spin_box.setHidden(False)
+            self.y_max_spin_box.setValue(self.axis_types_with_ticks["y_axis_max"])
 
         elif self.axis_types_with_ticks["y_axis_type"] == "text":
-            self.yMax.setHidden(True)
-            self.yMin.setHidden(True)
+            self.y_min_label.setHidden(True)
+            self.y_min_spin_box.setHidden(True)
+            self.y_max_label.setHidden(True)
+            self.y_max_spin_box.setHidden(True)
 
         if self.axis_types_with_ticks["x_axis_type"] == "number":
-            self.xMax.setHidden(False)
-            self.xMin.setHidden(False)
-            self.xMax.setValue(self.axis_types_with_ticks["x_axis_max"])
-            self.xMin.setValue(self.axis_types_with_ticks["x_axis_min"])
+            self.x_min_label.setHidden(False)
+            self.x_min_spin_box.setHidden(False)
+            self.x_min_spin_box.setValue(self.axis_types_with_ticks["x_axis_min"])
+
+            self.x_max_label.setHidden(False)
+            self.x_max_spin_box.setHidden(False)
+            self.x_max_spin_box.setValue(self.axis_types_with_ticks["x_axis_max"])
 
         elif self.axis_types_with_ticks["x_axis_type"] == "text":
-            self.xMax.setHidden(True)
-            self.xMin.setHidden(True)
+            self.y_min_label.setHidden(True)
+            self.y_min_spin_box.setHidden(True)
+            self.y_max_label.setHidden(True)
+            self.y_max_spin_box.setHidden(True)
 
     def set_min_max_values(self):
         if self.axis_types_with_ticks["y_axis_type"] == "number":
-            self.axis_types_with_ticks["y_axis_max"] = self.yMax.value()
-            self.axis_types_with_ticks["y_axis_min"] = self.yMin.value()
+            self.axis_types_with_ticks["y_axis_min"] = self.y_min_spin_box.value()
+            self.axis_types_with_ticks["y_axis_max"] = self.y_max_spin_box.value()
 
         if self.axis_types_with_ticks["x_axis_type"] == "number":
-            self.axis_types_with_ticks["x_axis_max"] = self.xMax.value()
-            self.axis_types_with_ticks["x_axis_min"] = self.xMin.value()
+            self.axis_types_with_ticks["x_axis_min"] = self.x_min_spin_box.value()
+            self.axis_types_with_ticks["x_axis_max"] = self.x_max_spin_box.value()
 
     def initColors(self):
         if isinstance(self.bgr_colors, dict):
@@ -179,12 +196,10 @@ class EditWindow(QMainWindow):
             self.title_str = self.title.text()
 
     def update_chart(self):
-        self.fill_error_list()
         self.set_title_data()
         if isinstance(self.bgr_colors, dict):
             self.set_groups_for_update()
         self.set_min_max_values()
-        self.display_error_list()
 
         if len(self.error_list) == 0:
             logger.info("Update started")
@@ -212,9 +227,6 @@ class EditWindow(QMainWindow):
 
         if self.title.text() == "" and self.title_pos != 0:
             self.error_list.append("Amennyiben nem szeretne címet megadni, válassza ki a 'Nincs cím' opciót.")
-
-    def display_error_list(self):
-        self.error_label.setText("\n".join(self.error_list))
 
     def back_to_main(self):
         self.close()
