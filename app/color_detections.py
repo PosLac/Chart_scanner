@@ -6,20 +6,20 @@ from app import image_detections, image_edits
 similar_color_threshold = 40
 
 
-def detect_colors(img, bar_stats, bars_labels):
+def detect_colors(img: np.ndarray, bar_stats: list, bars_labels: list) -> list:
     """
     Detects dominant colors of bars
+
     Args:
-        img:
-        bar_stats:
-        bars_labels:
+        img: input image with bars
+        bar_stats:  bar stats
+        bars_labels:    labels of detected bars
 
     Returns:
-
+        bars_with_colors: detected bars with their dominant colors
     """
     bars_with_colors = []
     bars_img = np.ndarray(img.shape)
-    # print(f"bar_stats: {bar_stats}")
     for i in range(len(bar_stats)):
         bars_img.fill(0)
         color_bgr = detect_bar_color(img, bar_stats, bars_labels, i + 1)
@@ -30,29 +30,33 @@ def detect_colors(img, bar_stats, bars_labels):
             "h": bar_stats[i][3],
             "bgr_color": np.array(color_bgr)
         })
-        # print(f"{i}. (stats: {bar_stats[i]}) \t (color: {color_rgb})")
         bars_img[bars_labels == i + 1] = 255
-    # image_detections.print_array("bars_with_colors", bars_with_colors)
     return bars_with_colors
 
 
-def detect_bars_by_color(all_color_bars_img, color):
-    # cv2.imwrite("A-all_color_bars_img.png", all_color_bars_img)
+def detect_bars_by_color(all_color_bars_img: np.ndarray, bgr_color: list) -> list:
+    """
+    Detect bars with the same color ad the given color
+
+    Args:
+        all_color_bars_img: color image with bars
+        bgr_color: bgr color to detect bars
+
+    Returns:
+        bars_with_stats: stats of bars with the given color
+    """
     bars_with_stats = []
 
-    norm = np.array(np.clip(np.linalg.norm(all_color_bars_img - color, axis=-1), 0, 255), np.uint8)
-    # cv2.imwrite("A-norm.png", norm)
+    norm = np.array(np.clip(np.linalg.norm(all_color_bars_img - bgr_color, axis=-1), 0, 255), np.uint8)
 
     retval = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     norm = cv2.dilate(norm, retval, None, None, 1)
     norm = cv2.erode(norm, retval, None, None, 2)
     norm = cv2.dilate(norm, retval, None, None, 1)
-    # cv2.imwrite("A-norm2.png", norm)
 
     color_mask = np.array(norm < similar_color_threshold, np.uint8)
     color_mask[color_mask > 0] = 255
     color_mask = 255 - color_mask
-    # cv2.imwrite("A-color_mask.png", color_mask)
 
     contours, _ = cv2.findContours(color_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     bounding_contour = max(contours, key=cv2.contourArea)
@@ -71,33 +75,43 @@ def detect_bars_by_color(all_color_bars_img, color):
     return bars_with_stats
 
 
-def detect_colors_for_grouped_chart(merged_img, legend_bars_data):
+def detect_colors_for_grouped_chart(merged_img: np.ndarray, legend_bars_data: list) -> dict:
+    """
+    Detect colors if the chart is grouped
+
+    Args:
+        merged_img:  image with merged similar colors
+        legend_bars_data:   text and color of bars in cropped legend
+
+    Returns:
+        groups_with_bars: bars grouped by color
+    """
     groups_with_bars = {}
     for legend_bar in legend_bars_data:
         bars_with_stats = detect_bars_by_color(merged_img, legend_bar["bgr_color"])
         groups_with_bars[legend_bar["text"]] = {
             "group_color": legend_bar["bgr_color"],
             "bars": bars_with_stats}
-    # image_detections.print_array("groups_with_bars", groups_with_bars)
 
     return groups_with_bars
 
 
-def detect_bar_color(resized_color, bars_stats, bars_labels, label):
+def detect_bar_color(img: np.ndarray, bars_stats: list, bars_labels: list, label: int) -> list:
     """
     Detects the dominant color of a bar
+
     Args:
-        resized_color:
-        bars_stats:
-        bars_labels:
-        label:
+        img:    input image to detect the color of a bar
+        bars_stats: stats of the detected bars
+        bars_labels:    labels of the detected bars
+        label:  detect the bars with this label
 
     Returns:
-
+        dominant_color: dominant bgr color in the bar
     """
-    bar_with_color = np.ndarray(resized_color.shape, np.uint8)
+    bar_with_color = np.ndarray(img.shape, np.uint8)
     bar_with_color.fill(0)
-    bar_with_color[bars_labels == label] = resized_color[bars_labels == label]
+    bar_with_color[bars_labels == label] = img[bars_labels == label]
     index = label - 1
     start_x = bars_stats[index][0]
     end_x = start_x + bars_stats[index][2]
@@ -132,13 +146,20 @@ def detect_bar_color(resized_color, bars_stats, bars_labels, label):
     return dominant_color
 
 
-def merge_legend_bar_colors(bar_stats_with_colors):
-    # print(f"\tbar_stats_with_colors: {bar_stats_with_colors}")
+def merge_legend_bar_colors(bar_stats_with_colors: list) -> list:
+    """
+    Merges similar colors in a bar
+
+    Args:
+        bar_stats_with_colors: bars and their colors
+
+    Returns:
+        grouped_bgr_colors: bars and their new colors in a grouped list
+    """
     grouped_bgr_colors = []
     similar_color_index = None
 
     for i, bar_stats in enumerate(bar_stats_with_colors):
-        # print(f"{i}. pos: {pos}, color: {color}")
         for j, color_bar in enumerate(grouped_bgr_colors):
             norm = int(
                 np.linalg.norm(np.array(color_bar["bgr_color"], np.int8) - np.array(bar_stats["bgr_color"], np.int8)))
@@ -147,7 +168,6 @@ def merge_legend_bar_colors(bar_stats_with_colors):
                 break
             else:
                 similar_color_index = None
-            # print(f"norm: {values['color']} - {color} = {norm}, {key}")
         x = bar_stats["x"]
         y = bar_stats["y"]
         w = bar_stats["w"]
@@ -169,7 +189,6 @@ def merge_legend_bar_colors(bar_stats_with_colors):
             average = np.array(
                 np.average([grouped_bgr_colors[similar_color_index]["bgr_color"], bar_stats["bgr_color"]], axis=0),
                 np.uint8)
-            # print(f"{grouped_bgr_colors[similar_color_key]['color']} and {color} = {average}")
             grouped_bgr_colors[similar_color_index]["bgr_color"] = average
 
         else:
@@ -180,18 +199,25 @@ def merge_legend_bar_colors(bar_stats_with_colors):
                 "h": h,
                 "bgr_color": bar_stats["bgr_color"]
             })
-    # image_detections.print_array("grouped_legend_bgr_colors", grouped_bgr_colors)
+
     return grouped_bgr_colors
 
 
-def get_bar_color_for_simple_chart(bar_stats_with_colors):
-    # print(f"\tbar_stats_with_colors: {bar_stats_with_colors}")
+def get_bar_color_for_simple_chart(bar_stats_with_colors: list) -> None:
+    """
+    Detects the dominant color if bars in simple charts
+
+    Args:
+        bar_stats_with_colors: bars with stats and their colors in a list
+
+    Returns:
+        None
+    """
     grouped_bgr_colors = {}
     threshold = 60
     similar_color_key = None
 
     for i, bar in enumerate(bar_stats_with_colors):
-        # print(f"{i}. pos: {pos}, color: {color}")
         for key, values in grouped_bgr_colors.items():
             norm = int(np.linalg.norm(np.array(values["bgr_color"], np.int8) - np.array(bar["bgr_color"], np.int8)))
             if norm <= threshold:
@@ -199,26 +225,30 @@ def get_bar_color_for_simple_chart(bar_stats_with_colors):
                 break
             else:
                 similar_color_key = None
-            # print(f"norm: {values['color']} - {color} = {norm}, {key}")
 
         if similar_color_key is not None:
             average = np.array(
                 np.average([grouped_bgr_colors[similar_color_key]['bgr_color'], bar["bgr_color"]], axis=0),
                 np.uint8)
-            # print(f"{grouped_bgr_colors[similar_color_key]['color']} and {color} = {average}")
             image_detections.colors = average
 
         else:
             image_detections.colors = bar["bgr_color"]
 
-    # image_detections.print_array("tcolors", image_detections.colors)
 
+def merge_similar_colors(legend_bars_data: list) -> list:
+    """
+    Merges similar bar colors
 
-def merge_similar_colors(legend_bars_data):
+    Args:
+        legend_bars_data:   list of detected bars in the legend
+
+    Returns:
+        merged_colors: bars image with merged colors
+    """
     all_color_bars_img = cv2.bitwise_and(image_edits.img_color, image_edits.img_color,
                                          mask=image_edits.bars_img)
     merged_colors = all_color_bars_img.copy()
-    # cv2.imwrite("A-merged.png", merged_colors)
     threshold = 20
 
     for group in legend_bars_data:
@@ -227,38 +257,5 @@ def merge_similar_colors(legend_bars_data):
         upper_color = np.clip(np.array(np.array(color, np.int16) + threshold), 0, 255)
         mask = cv2.inRange(merged_colors, lower_color, upper_color)
         merged_colors[mask == 255] = color
-        # cv2.imwrite("A-merged.png", merged_colors)
+
     return merged_colors
-
-
-def merge_grouped_chart_bar_colors(bar_stats_with_data):
-    bars_with_merged_colors = {}
-    threshold = 60
-    similar_color_key = None
-
-    for i, bar_stats in enumerate(bar_stats_with_data):
-        for key, value in bars_with_merged_colors.items():
-            norm = int(
-                np.linalg.norm(np.array(value["group_color"], np.int8) - np.array(bar_stats["bgr_color"], np.int8)))
-            if norm <= threshold:
-                similar_color_key = key
-                break
-            else:
-                similar_color_key = None
-
-        # Similar color
-        if similar_color_key is not None:
-            bars_with_merged_colors[similar_color_key]["bars"].append(bar_stats)
-
-            average = np.array(
-                np.average([bars_with_merged_colors[similar_color_key]["group_color"], bar_stats["bgr_color"]], axis=0),
-                np.uint8)
-            bars_with_merged_colors[similar_color_key]["group_color"] = average
-
-        # New color
-        else:
-            bars_with_merged_colors[len(bars_with_merged_colors)] = {
-                "group_color": bar_stats["bgr_color"],
-                "bars": [bar_stats]
-            }
-    return bars_with_merged_colors

@@ -1,6 +1,7 @@
 import math
 import cv2
 import numpy as np
+from PyQt5.QtCore import QRect
 
 from config import config
 
@@ -9,7 +10,6 @@ upscale_rate = 1
 THRESHOLD = 230
 bars_stats = None
 bars_with_labels = None
-img_orig_gray = None
 img_gray = None
 img_color = None
 binary = None
@@ -37,18 +37,17 @@ def upscale() -> None:
     logger.info(f"Upscale image with {upscale_rate}")
 
 
-def thresholding(threshold) -> np.ndarray:
+def thresholding(threshold: int) -> np.ndarray:
     """
     Thresholds image with the given value and returns with the image
 
     Returns:
         binary (numpy.ndarray):
     """
-    global binary, hugh
+    global binary, hugh, img_gray
     binary = np.uint8(np.ndarray(img_gray.shape))
     binary.fill(0)
     binary[img_gray < threshold] = 255
-    # cv2.imwrite("A-binary.png", binary)
     return binary
 
 
@@ -56,12 +55,12 @@ def image_straightening() -> np.ndarray:
     """
     Rotates the image in case that is not straight, updates and returns with the global img_color
     If the rotation of the input image is more than 45°,
-    it can rotate the image to a position which is +90° or -90° than the straight image #TODO pontos fok
+    it can rotate the image to a position which is +90° or -90° than the straight image
 
     Returns:
         None
     """
-    global binary, img_orig_gray, img_gray, img_color, hugh
+    global binary, img_gray, img_color, hugh
 
     hugh = cv2.Canny(img_gray, 50, 200, None, 3)
     cdst = cv2.cvtColor(hugh, cv2.COLOR_GRAY2BGR)
@@ -111,18 +110,23 @@ def image_straightening() -> np.ndarray:
     return img_color
 
 
-def get_bar_stats(legend_position) -> np.ndarray:
+def get_bar_stats(legend_position: QRect) -> np.ndarray:
     """
     Delete text and unnecessary objects from image using morphological transformation, and leaves only the bars
     Returns with the remaining object stats (bars) using connected component detection
 
+    Args:
+        legend_position:    QRect of the cropped area for legend
+
     Returns:
         bars_stats: stats of the bars
+
+    Raises:
+        Exception: if can't find connected components
     """
     global bars_img, bars_with_labels, bars_stats, upscale_rate
 
     img = thresholding(THRESHOLD)
-    # cv2.imwrite("A-bars_img1.png", img)
     retval = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
 
     bars_img = cv2.erode(img, retval, None, None, 14)
@@ -139,7 +143,6 @@ def get_bar_stats(legend_position) -> np.ndarray:
         legend_end_x = int(legend_position.bottomRight().x() * upscale_rate)
         legend_end_y = int(legend_position.bottomRight().y() * upscale_rate)
         bars_img[legend_start_y:legend_end_y, legend_start_x:legend_end_x] = 0
-        # cv2.imwrite("bars_img.png", bars_img)
 
     _, bars_with_labels, stats, _ = cv2.connectedComponentsWithStats(bars_img, None, 8)
     bars_stats = stats.copy()
@@ -149,5 +152,4 @@ def get_bar_stats(legend_position) -> np.ndarray:
 
     if len(bars_stats) == 0:
         raise Exception("Can't detect bars on the image")
-    # logger.info(f"Stats of bars: {bars_stats}")
     return bars_stats

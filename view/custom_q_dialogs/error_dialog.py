@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QIcon
 
 from config import config
 
@@ -8,6 +8,9 @@ logger = config.logger
 
 
 class ErrorDialog(QtWidgets.QDialog):
+    """
+    QDialog to open when Exception was raised and show errors
+    """
     def __init__(self, error_list=None, parent=None):
         super(ErrorDialog, self).__init__(parent)
 

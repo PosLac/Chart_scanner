@@ -5,6 +5,9 @@ from colorlog import ColoredFormatter
 
 
 class Config:
+    """
+    Config class to set default path variables and default logger
+    """
     def __init__(self):
         self.file_name = ""
         self.resources_path = Path(__file__).resolve().parent / "resources"

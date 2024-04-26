@@ -10,6 +10,9 @@ logger = config.logger
 
 
 class QGraphicsViewWithScene(QGraphicsView):
+    """
+    Custom QGraphicsView, used for output views
+    """
     set_generated_image = pyqtSignal(QPixmap, object, object)
     set_error_image_signal = pyqtSignal()
     start_spinner_signal = pyqtSignal()
@@ -33,7 +36,10 @@ class QGraphicsViewWithScene(QGraphicsView):
                                                                                                     Qt.KeepAspectRatio)
         logger.info(f"{self.__class__.__name__} inited")
 
-    def add_label(self):
+    def start_loading_screen(self):
+        """
+        Sets and starts a loading screen on the view
+        """
         self.scene.clear()
         self.label = QLabel()
         self.item = self.scene.addWidget(self.label)
@@ -44,6 +50,9 @@ class QGraphicsViewWithScene(QGraphicsView):
                          (self.scene.height() - self.label.height()) / 2)
 
     def set_error_image(self):
+        """
+        Sets the default error image to view
+        """
         self.scene.clear()
         self.label = QLabel()
         self.label.setGeometry(0, 0, 200, 200)
@@ -52,7 +61,15 @@ class QGraphicsViewWithScene(QGraphicsView):
         self.item.setPos((self.scene.width() - self.label.width()) / 2,
                          (self.scene.height() - self.label.height()) / 2)
 
-    def set_image(self, pixmap, width=None, height=None):
+    def set_image(self, pixmap: QPixmap, width: int = None, height: int = None):
+        """
+        Sets the given QPixmap to view, sets default error image when no pixmap to set
+
+        Args:
+            pixmap: QPixmap to set to view
+            width:  width to set to view
+            height: height to set to view
+        """
         if width == 0 or height == 0:
             self.set_error_image()
         try:

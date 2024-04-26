@@ -1,5 +1,7 @@
 from datetime import datetime
+from typing import Tuple, Union
 
+from PyQt5.QtCore import QRect
 from pylatex import (Document, TikZ, TikZNode,
                      TikZOptions,
                      Axis, Plot, Command, NoEscape)
@@ -11,8 +13,23 @@ DEFAULT_LEGEND_POSITION = 0.95
 logger = config.logger
 
 
-def prepare_universal_data(chart_type, bgr_color_data, title, legend_position=None,
-                           title_pos=None):
+def prepare_universal_data(chart_type: str, bgr_color_data: Union[dict, list], title: str, legend_position: QRect = None, title_pos: int = None) -> Tuple[list, list, str, list]:
+    """
+    Prepares data and options for latex generation and updae
+
+    Args:
+        chart_type:     type of the chart ("simple" or "grouped" or "stacked")
+        bgr_color_data: bgr colors of bars
+        title:          detected title
+        legend_position:    QRect of the cropped area for legend
+        title_pos:          position of the title to detect (-1: below, 0: no title, 1: above)
+
+    Returns:
+        plot_options_array:     latex options for the chart
+        define_color_arguments: custom color arguments in latex format
+        legend_arguments:       arguments for the legend in latex format
+        coordinates_with_options:   coordinates for the chart in latex format
+    """
     logger.info("Prepare universal data")
     plot_options_array = [image_detections.orientation, "name=barchart"]
     define_color_arguments = []
@@ -79,14 +96,23 @@ def prepare_universal_data(chart_type, bgr_color_data, title, legend_position=No
     return plot_options_array, define_color_arguments, legend_arguments, coordinates_with_options
 
 
-def prepare_data_for_generation(chart_type, legend_position=None, title_pos=None):
+def prepare_data_for_generation(chart_type: str, legend_position: QRect = None, title_pos: int = None) -> None:
+    """
+    Prepares data and options for latex generation
+
+    Args:
+        chart_type: type of the chart ("simple" or "grouped" or "stacked")
+        chart_type:     type of the chart ("simple" or "grouped" or "stacked")
+        legend_position:    QRect of the cropped area for legend
+        title_pos:          position of the title to detect (-1: below, 0: no title, 1: above)
+
+    Returns:
+        None
+    """
     logger.info("Prepare data for generation")
 
     plot_options_array, define_color_arguments, legend_arguments, coordinates_with_options = prepare_universal_data(
         chart_type, image_detections.colors, image_detections.title, legend_position, title_pos)
-
-    # image_detections.print_array("define_color_arguments", define_color_arguments)
-    # image_detections.print_array("group_coordinates", coordinates_with_options)
 
     plot_options_str = ", ".join(plot_options_array)
 
@@ -97,15 +123,24 @@ def prepare_data_for_generation(chart_type, legend_position=None, title_pos=None
                    image_detections.title, title_pos)
 
 
-def prepare_data_for_update(chart_type, colors, legend_position=None, title=None,
-                            title_pos=None):
+def prepare_data_for_update(chart_type: str, colors: list, legend_position: QRect = None, title: str = None, title_pos: int = None) -> None:
+    """
+    Prepares data and options for update latex code
+
+    Args:
+        chart_type:     type of the chart ("simple" or "grouped" or "stacked")
+        colors:     colors of the bars to update
+        legend_position:    QRect of the cropped area for legend
+        title:  title text to update
+        title_pos:      position of the title to update (-1: below, 0: no title, 1: above)
+
+    Returns:
+        None
+    """
     logger.info("Prepare data for update")
 
     plot_options_array, define_color_arguments, legend_arguments, coordinates_with_options = prepare_universal_data(
         chart_type, colors, title, legend_position, title_pos)
-
-    # image_detections.print_array("define_color_arguments", define_color_arguments)
-    # image_detections.print_array("group_coordinates", coordinates_with_options)
 
     plot_options_str = ", ".join(plot_options_array)
 
@@ -113,7 +148,21 @@ def prepare_data_for_update(chart_type, colors, legend_position=None, title=None
                    title_pos)
 
 
-def prepare_data_for_grouped_chart(plot_options_array, legend_position, texts_and_colors):
+def prepare_data_for_grouped_chart(plot_options_array: list, legend_position: QRect, texts_and_colors: dict) -> Tuple[list, list, str, list]:
+    """
+    Prepares data and options for grouped charts to generate latex code
+
+    Args:
+        plot_options_array: latex options for the chart
+        legend_position:    QRect of the cropped area for legend
+        texts_and_colors:   bar texts and colors
+
+    Returns:
+        plot_options_array:     latex options for the chart
+        define_color_arguments: custom color arguments in latex format
+        legend_arguments:       arguments for the legend in latex format
+        coordinates_with_options:   coordinates for the chart in latex format
+    """
     legend_arguments = ""
     define_color_arguments = []
     coordinates_with_options = []
@@ -146,7 +195,6 @@ def prepare_data_for_grouped_chart(plot_options_array, legend_position, texts_an
 
     plot_options_array.append("legend style={at={" + str(legend_top_right) + "}}")
     plot_options_array.append("legend cell align={left}")
-    # image_detections.print_array("plot_options", plot_options_array)
 
     # First generation
     if isinstance(texts_and_colors, list):
@@ -182,7 +230,18 @@ def prepare_data_for_grouped_chart(plot_options_array, legend_position, texts_an
     return plot_options_array, define_color_arguments, legend_arguments, coordinates_with_options
 
 
-def prepare_title(plot_options_array, title, title_pos):
+def prepare_title(plot_options_array: list, title: str, title_pos: int) -> list:
+    """
+    Prepare title options for latex generation
+
+    Args:
+        plot_options_array: latex options for the chart
+        title:  text of the chart title
+        title_pos:  position of the title to detect (-1: below, 0: no title, 1: above)
+
+    Returns:
+        plot_options_array: latex options for the chart completed by title
+    """
     # Title above the chart
     if title_pos == 1:
         image_detections.chart_title = title
@@ -195,8 +254,25 @@ def prepare_title(plot_options_array, title, title_pos):
     return plot_options_array
 
 
-def generate_latex(plot_options, legend_arguments, define_color_arguments, coordinates_with_options, title,
-                   title_pos):
+def generate_latex(plot_options_str: str, legend_arguments: str, define_color_arguments: list, coordinates_with_options: list, title: str, title_pos: int) -> None:
+    """
+    Generate latex code from the given options
+
+    Args:
+        plot_options_str:   latex options for the chart
+        legend_arguments:   arguments for the legend
+        define_color_arguments:     arguments for the custom colors
+        coordinates_with_options:   coordinates and their options
+        title:      text of the title
+        title_pos:  position of the title to detect (-1: below, 0: no title, 1: above)
+
+    Returns:
+        None
+
+    Raises:
+        PyLaTeXError:   if exception raised during latex file generation
+        CalledProcessError: if latex generation returns with non-zero value
+    """
     logger.info("Latex file generation started")
 
     doc = Document(documentclass="standalone")
@@ -206,7 +282,7 @@ def generate_latex(plot_options, legend_arguments, define_color_arguments, coord
         for arguments in define_color_arguments:
             tikz.append(Command("definecolor", arguments=arguments))
 
-        with doc.create(Axis(options=NoEscape(plot_options))) as plot:
+        with doc.create(Axis(options=NoEscape(plot_options_str))) as plot:
             for (coordinates, options) in coordinates_with_options:
                 plot.append(Plot(coordinates=coordinates, options=NoEscape(options)))
             # Insert legend

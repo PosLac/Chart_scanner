@@ -12,6 +12,9 @@ logger = config.logger
 
 
 class InputChartWindow(QMainWindow):
+    """
+    QMainWindow to select and crop image containing chart for further detections, this is the first window shown
+    """
 
     def __init__(self, parent=None):
         super(InputChartWindow, self).__init__(parent)
@@ -51,6 +54,9 @@ class InputChartWindow(QMainWindow):
         logger.info(f"{self.__class__.__name__} inited")
 
     def open_file(self):
+        """
+        Opens a QFileDialog to select the image containing the chart to detect
+        """
         formats = " ".join(["*.{}".format(fo.data().decode()) for fo in QImageReader.supportedImageFormats()])
         img_filter = "Images ({})".format(formats)
         self.opened_file_path, _ = QFileDialog.getOpenFileName(None, "Open file", "", filter=img_filter)
@@ -68,6 +74,9 @@ class InputChartWindow(QMainWindow):
             self.right_grid_layout.setRowStretch(3, 0)
 
     def jump_to_main_window(self):
+        """
+        Closes the current window and opens a MainWindow to start chart detections
+        """
         self.close()
         logger.info(f"{self.__class__.__name__} closed")
         self.main_window = MainWindow(self)
@@ -75,6 +84,9 @@ class InputChartWindow(QMainWindow):
             self.main_window.input_image_view.set_image(self.output_image_view.image)
 
     def set_chart_to_view(self):
+        """
+        Sets the full input image without crop to output view
+        """
         logger.info("Chart loaded without crop")
         self.output_image_view.set_image(self.chart)
         self.jump_to_scan_button.setHidden(False)

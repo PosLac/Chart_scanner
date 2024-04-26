@@ -7,13 +7,16 @@ from PyQt5.QtWidgets import QMainWindow, QRadioButton, QLineEdit, QPushButton, Q
 
 from app import axis_detections, worker, image_detections
 from config import config
-from view.custom_q_dialog.error_dialog import ErrorDialog
+from view.custom_q_dialogs.error_dialog import ErrorDialog
 from view.custom_q_graphics_views.qGraphicsViewWithScene import QGraphicsViewWithScene
 
 logger = config.logger
 
 
 class EditWindow(QMainWindow):
+    """
+    QMainWindow to edit detected chart parameters and generate the edited chart
+    """
     edit_work_requested = pyqtSignal(object, object, object)
 
     def __init__(self, parent_window):
@@ -68,7 +71,6 @@ class EditWindow(QMainWindow):
         self.init_min_max_values()
 
         # bottom_group
-        # self.error_label = self.findChild(QLabel, "error_label")
         self.update_button = self.findChild(QPushButton, "update_button")
         self.back_button = self.findChild(QPushButton, "back")
         self.update_button.clicked.connect(self.update_chart)
@@ -85,16 +87,17 @@ class EditWindow(QMainWindow):
         # workers
         self.worker = worker.Worker(self)
         self.worker_thread = QThread()
-        # self.worker.fname.connect(self.update)
         self.edit_work_requested.connect(self.worker.update_chart)
         self.worker.moveToThread(self.worker_thread)
         self.worker_thread.start()
 
-        # self.generation_completed.connect(lambda: print("Update done"))
         self.initColors()
         logger.info(f"{self.__class__.__name__} inited")
 
     def init_min_max_values(self):
+        """
+        Set detected minimum and maximum values for number type axis
+        """
         if self.axis_types_with_ticks["y_axis_type"] == "number":
             self.y_min_label.setHidden(False)
             self.y_min_spin_box.setHidden(False)
@@ -126,6 +129,9 @@ class EditWindow(QMainWindow):
             self.y_max_spin_box.setHidden(True)
 
     def set_min_max_values(self):
+        """
+        Saves the minimum and maximum values for latex generation
+        """
         if self.axis_types_with_ticks["y_axis_type"] == "number":
             self.axis_types_with_ticks["y_axis_min"] = self.y_min_spin_box.value()
             self.axis_types_with_ticks["y_axis_max"] = self.y_max_spin_box.value()
@@ -135,6 +141,9 @@ class EditWindow(QMainWindow):
             self.axis_types_with_ticks["x_axis_max"] = self.x_max_spin_box.value()
 
     def initColors(self):
+        """
+        Set initial color values to show
+        """
         if isinstance(self.bgr_colors, dict):
             for i, (key, value) in enumerate(self.bgr_colors.items()):
                 color_label = QLabel()
@@ -147,10 +156,8 @@ class EditWindow(QMainWindow):
 
                 color_picker_button = QPushButton("Oszlop színének módosítása")
                 color_picker_button.setFont(self.default_font)
-                # color_picker_button.setStyleSheet("padding: 10px")
                 color_picker_button.clicked.connect(
-                    lambda _, color=color_label, text=group_text: self.open_color_picker(color,
-                                                                                         text))
+                    lambda _, color=color_label, text=group_text: self.open_color_picker(color, text))
                 self.updated_bgr_colors[group_text] = value
 
                 self.color_layout.addWidget(group_text, i, 0)
@@ -164,27 +171,38 @@ class EditWindow(QMainWindow):
 
             color_picker_button = QPushButton("Oszlop színének módosítása")
             color_picker_button.setFont(self.default_font)
-            # color_picker_button.setStyleSheet("padding: 10px")
             color_picker_button.clicked.connect(lambda _, color_param=color_label: self.open_color_picker(color_param))
 
             self.color_layout.addWidget(color_label, 0, 0, 1, 1, Qt.AlignRight)
             self.color_layout.addWidget(color_picker_button, 0, 1, 1, 1, Qt.AlignRight)
 
-    def open_color_picker(self, color_label, color_text_label=None):
+    def open_color_picker(self, color_label: QLabel, line_edit_text_for_color: QLineEdit = None):
+        """
+        Opens a QColorDialog for the selected group
+
+        Args:
+            color_label: QLabel containing the color
+            line_edit_text_for_color:   QLIneEdit containing the group text
+        """
         color = QColorDialog.getColor()
         if color.isValid():
-            # print(f"hexa: {color.name()}, rgb: {color.getRgb()}, {color.getRgb()[:3]}")
             color_label.setStyleSheet(f"background: rgb({', '.join(map(str, color.getRgb()[:3]))})")
-            if color_text_label:
-                self.updated_bgr_colors[color_text_label] = np.array(color.getRgb()[:3][::-1], np.uint8)
+            if line_edit_text_for_color:
+                self.updated_bgr_colors[line_edit_text_for_color] = np.array(color.getRgb()[:3][::-1], np.uint8)
             else:
                 self.bgr_colors = color.getRgb()[:3][::-1]
 
     @pyqtSlot()
     def set_loading_screen(self):
-        self.output_image_view.add_label()
+        """
+        pyqtSlot to start loading screen on output view
+        """
+        self.output_image_view.start_loading_screen()
 
     def set_title_data(self):
+        """
+        Sets selected title parameters for generation
+        """
         if self.above.isChecked():
             self.title_pos = 1
         elif self.below.isChecked():
@@ -196,6 +214,9 @@ class EditWindow(QMainWindow):
             self.title_str = self.title.text()
 
     def update_chart(self):
+        """
+        Sets parameters to update the chart and start latex generation
+        """
         self.set_title_data()
         if isinstance(self.bgr_colors, dict):
             self.set_groups_for_update()
@@ -208,6 +229,9 @@ class EditWindow(QMainWindow):
             logger.info("Update finished")
 
     def set_groups_for_update(self):
+        """
+        Sets groups with data to update grouped or stacked chart
+        """
         self.bgr_colors = {}
         for group_text, color in self.updated_bgr_colors.items():
             if group_text.text() == "":
@@ -217,21 +241,19 @@ class EditWindow(QMainWindow):
             else:
                 self.bgr_colors[group_text.text()] = color
 
-    def fill_error_list(self):
-        self.error_list.clear()
-        if not self.xMin.isHidden() and not self.xMax.isHidden() and self.xMin.value() > self.xMax.value():
-            self.error_list.append("A x tengely maximum értéke nagyobb kell, hogy legyen, mint a minimum.")
-
-        if not self.yMin.isHidden() and not self.yMax.isHidden() and self.yMin.value() > self.yMax.value():
-            self.error_list.append("Az y tengely maximum értéke nagyobb kell, hogy legyen, mint a minimum.")
-
-        if self.title.text() == "" and self.title_pos != 0:
-            self.error_list.append("Amennyiben nem szeretne címet megadni, válassza ki a 'Nincs cím' opciót.")
-
     def back_to_main(self):
+        """
+        Closes the current window and opens the parent MainWindow
+        """
         self.close()
         self.parent_window.showMaximized()
 
-    def open_modal_dialog(self, error_list):
+    def open_error_dialog(self, error_list):
+        """
+        Opens error dialog
+
+        Args:
+            error_list: list containing the errors based on the raised Exceptions
+        """
         dialog = ErrorDialog(error_list, self)
         dialog.exec_()

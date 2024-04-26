@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QFileDialog, QMainWindow, QPushButton, QLabel, QRadi
 from app import worker
 from config import config
 from .editWindow import EditWindow
-from .custom_q_dialog.error_dialog import ErrorDialog
+from .custom_q_dialogs.error_dialog import ErrorDialog
 from .custom_q_graphics_views.qGraphicsViewWithScene import QGraphicsViewWithScene
 from .custom_q_graphics_views.inputImageQGraphicsView import InputImageQGraphicsView
 
@@ -21,6 +21,9 @@ logger = config.logger
 
 
 class MainWindow(QMainWindow):
+    """
+    QMainWindow to set basic options and start chart detections
+    """
     main_work_requested = pyqtSignal(object, object, object)
     generation_completed = pyqtSignal()
     auto_straightening_signal = pyqtSignal(object)
@@ -46,9 +49,6 @@ class MainWindow(QMainWindow):
         self.file_name_label.setText(parent_window.file_name_label.text())
         self.input_image_view = self.findChild(InputImageQGraphicsView, "input_image_view")
         self.input_image_view.setScene(self.input_image_view.scene)
-
-        # details_group
-        self.details_group = self.findChild(QGroupBox, "details_group")  # TODO szükséges?
 
         # legend_group
         self.legend_group = self.findChild(QGroupBox, "legend_group")
@@ -101,13 +101,16 @@ class MainWindow(QMainWindow):
         self.main_work_requested.connect(self.worker.create_chart)
         self.auto_straightening_signal.connect(self.worker.auto_straightening)
         self.generation_completed.connect(lambda: self.export_edit_group.setHidden(False))
-        self.worker.error_signal.connect(self.open_modal_dialog)
+        self.worker.error_signal.connect(self.open_error_dialog)
         self.worker_thread.start()
 
         self.showMaximized()
         logger.info(f"{self.__class__.__name__} inited")
 
     def contains_legend_changed(self):
+        """
+        Called when QRadioButton to select if chart contains legend or not is changed, enables input view to crop legend
+        """
         contains = self.contains_legend.isChecked()
         self.crop_legend_label.setHidden(not contains)
         self.cropped_legend.setHidden(not contains)
@@ -120,7 +123,13 @@ class MainWindow(QMainWindow):
             self.crop_legend_label.setText("Jelölje ki a diagramon a jelmagyarázatot tartalmazó részt")
             self.input_image_view.crop_rect = None
 
-    def legend_has_cropped(self, pixmap):
+    def legend_has_cropped(self, pixmap: QPixmap):
+        """
+        Called when legend has cropped in input view
+
+        Args:
+            pixmap: cropped legend
+        """
         contains = self.contains_legend.isChecked()
         if contains:
             self.crop_legend_label.setText("Kijelölt jelmagyarázat:")
@@ -131,21 +140,33 @@ class MainWindow(QMainWindow):
             self.legend_pixmap = pixmap
 
     def scan_legend(self):
+        """
+        Starts legend detections
+        """
         self.legend_image_bgr = self.convert_pixmap_to_image(self.legend_pixmap)
         legend_position = self.input_image_view.crop_rect
         logger.info(f"Bounding rect of cropped legend: {legend_position}")
         chart_image_np = self.convert_pixmap_to_image(self.input_image_view.image)
-        self.main_work_requested.emit(chart_image_np, self.legend_image_bgr, legend_position)  # TODO logger
+        self.main_work_requested.emit(chart_image_np, self.legend_image_bgr, legend_position)
 
     @pyqtSlot()
     def set_loading_screen_on_input(self):
-        self.input_image_view.add_label()
+        """
+        pyqtSlot to start loading screen on input view
+        """
+        self.input_image_view.start_loading_screen()
 
     @pyqtSlot()
     def set_loading_screen_on_output(self):
-        self.output_image_view.add_label()
+        """
+        pyqtSlot to start loading screen on output view
+        """
+        self.output_image_view.start_loading_screen()
 
     def scan_chart(self):
+        """
+        Starts chart detections
+        """
         self.set_loading_screen_on_output()
 
         if self.above.isChecked():
@@ -159,9 +180,15 @@ class MainWindow(QMainWindow):
             self.scan_legend()
         else:
             chart_image_np = self.convert_pixmap_to_image(self.input_image_view.image)
-            self.main_work_requested.emit(chart_image_np, None, None)  # TODO logger
+            self.main_work_requested.emit(chart_image_np, None, None)
 
     def export(self, extension):
+        """
+        Opens a QFileDialog to export generated chart es .pdf or .png
+
+        Args:
+            extension: .pdf or .png, target extension
+        """
         dst = QFileDialog.getSaveFileName(self, "Save File",
                                           str(config.file_name) + "." + extension,
                                           "*." + extension)[0]
@@ -170,6 +197,9 @@ class MainWindow(QMainWindow):
         logger.info(f"{str(config.file_name)} \texported as \t{dst.split('/')[-1]}")
 
     def open_edit_window(self):
+        """
+        Sets options for EditWindow, closes the current and opens the EditWindow
+        """
         self.edit_window = EditWindow(self)
         self.edit_window.output_image_view.set_image(self.output_image_view.image)
         self.edit_window.legend_image_bgr = self.legend_image_bgr
@@ -181,11 +211,20 @@ class MainWindow(QMainWindow):
         self.edit_window.showMaximized()
 
     def back_to_input_window(self):
+        """
+        Closes the current window and opens the InputWindow to reselect the chart
+        """
         self.close()
         logger.info(f"{self.__class__.__name__} closed")
         self.parent_window.showMaximized()
 
     def convert_pixmap_to_image(self, pixmap):
+        """
+        Converts QPixmap to np.ndarray
+
+        Args:
+            pixmap: QPixmap to convert
+        """
         image = pixmap.toImage()
         ptr = image.bits()
         ptr.setsize(image.byteCount())
@@ -194,18 +233,30 @@ class MainWindow(QMainWindow):
         return converted_np_image
 
     def auto_straightening(self):
+        """
+        Straighten the image
+        """
         self.set_loading_screen_on_input()
         self.rotate_button.setHidden(False)
         self.legend_group.setHidden(False)
         self.title_group.setHidden(False)
         self.scanButton.setHidden(False)
         chart_image_np = self.convert_pixmap_to_image(self.input_image_view.image)
-        self.auto_straightening_signal.emit(chart_image_np) #TODO logger
+        self.auto_straightening_signal.emit(chart_image_np)
 
     def rotate_right_by_90(self):
+        """
+        Rotates the input image by 90° if output of auto-straightening process over-rotated it
+        """
         self.input_image_view.set_image(self.input_image_view.image.transformed(QTransform().rotate(90)))
         logger.info(f"Input chart image rotated by 90° on {self.__class__.__name__}")
 
-    def open_modal_dialog(self, error_list):
+    def open_error_dialog(self, error_list):
+        """
+        Opens error dialog
+
+        Args:
+            error_list: list containing the errors based on the raised Exceptions
+        """
         dialog = ErrorDialog(error_list, self)
         dialog.exec_()
