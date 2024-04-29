@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtGui import QFont
 
 from config import config
 
@@ -19,6 +19,7 @@ class ErrorDialog(QtWidgets.QDialog):
 
         self.setWindowTitle("Hiba")
         self.setModal(True)
+        self.setMaximumWidth(1080)
         self.layout = QtWidgets.QVBoxLayout()
         self.message_label = QtWidgets.QLabel("\n".join(error_list), self)
         self.default_font = QFont()

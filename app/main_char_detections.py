@@ -74,17 +74,20 @@ def start_char_detections(chart: np.ndarray, title_pos: [int, None], grouped: [b
             warning_list.append("Hiba történt a jelmagyarázat pozíciójának meghatározása során, így az az alapértelmezett pozíción fog megjelenni.")
 
         finally:
-            merged_img = color_detections.merge_similar_colors(legend_bars_data)
-            bars_with_colors = color_detections.detect_colors_for_grouped_chart(merged_img, legend_bars_data)
-            axis_detections.define_axis_data(title_pos)
-            stacked = image_detections.detect_if_chart_is_stacked(bars_with_colors)
+            try:
+                merged_img = color_detections.merge_similar_colors(legend_bars_data)
+                bars_with_colors = color_detections.detect_colors_for_grouped_chart(merged_img, legend_bars_data)
+                axis_detections.define_axis_data(title_pos)
+                stacked = image_detections.detect_if_chart_is_stacked(bars_with_colors)
 
-            if stacked:
-                image_detections.chart_type = "stacked"
-                image_detections.define_stacked_chart_values(bars_with_colors)
-            else:
-                image_detections.chart_type = "grouped"
-                image_detections.define_grouped_chart_values(bars_with_colors)
+                if stacked:
+                    image_detections.chart_type = "stacked"
+                    image_detections.define_stacked_chart_values(bars_with_colors)
+                else:
+                    image_detections.chart_type = "grouped"
+                    image_detections.define_grouped_chart_values(bars_with_colors)
+            except Exception:
+                raise Exception("Hiba történt a diagramtípus meghatározása során, próbálja meg kiegyenesíteni a képet.")
     else:
         image_detections.chart_type = "simple"
         simple_bars_with_colors_array = color_detections.detect_colors(image_edits.img_color,

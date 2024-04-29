@@ -99,7 +99,7 @@ def define_orientation() -> None:
     logger.info(f"{'Horizontal' if orientation == 'xbar' else 'Vertical'} chart detected")
 
 
-def define_simple_chart_values(bars_with_colors: dict) -> None:
+def define_simple_chart_values(bars_with_colors: list) -> None:
     """
     Defines the values of the bars for simple charts
 

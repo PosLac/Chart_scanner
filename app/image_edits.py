@@ -106,7 +106,7 @@ def image_straightening() -> np.ndarray:
         img_color = cv2.warpAffine(img_color, m, (cols, rows), borderMode=cv2.BORDER_CONSTANT,
                                    borderValue=(255, 255, 255))
 
-        logger.info(f"Rotate image with {average_rotation - 90.0}")
+        logger.info(f"Rotate image with {round(average_rotation - 90.0, 2)}")
     return img_color
 
 
@@ -122,7 +122,7 @@ def get_bar_stats(legend_position: QRect) -> np.ndarray:
         bars_stats: stats of the bars
 
     Raises:
-        Exception: if can't find connected components
+        Exception: if it can't find connected components
     """
     global bars_img, bars_with_labels, bars_stats, upscale_rate
 

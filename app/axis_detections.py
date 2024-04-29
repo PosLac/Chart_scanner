@@ -198,7 +198,7 @@ def group_by_axis(tick_data: list, threshold: float, horizontal: bool) -> list:
     Groups the ticks to two groups for the two axis and sort them by position
 
     Args:
-        tick_data:  stats of the detected ticks
+        tick_data:  detected tick stats
         threshold:  threshold for distance of the tick from another to group
         horizontal: orientation of the chart
 
@@ -296,7 +296,7 @@ def merge_tick_characters(sorted_data: list, threshold: float) -> list:
     return merged_numbers
 
 
-def isolate_x_y(stats: list) -> Tuple[list, list]:
+def isolate_x_y(stats: np.ndarray) -> Tuple[list, list]:
     """
     Isolates the ticks of the two axis from each other
 

@@ -91,7 +91,7 @@ class EditWindow(QMainWindow):
         self.worker.moveToThread(self.worker_thread)
         self.worker_thread.start()
 
-        self.initColors()
+        self.init_colors()
         logger.info(f"{self.__class__.__name__} inited")
 
     def init_min_max_values(self):
@@ -140,7 +140,7 @@ class EditWindow(QMainWindow):
             self.axis_types_with_ticks["x_axis_min"] = self.x_min_spin_box.value()
             self.axis_types_with_ticks["x_axis_max"] = self.x_max_spin_box.value()
 
-    def initColors(self):
+    def init_colors(self):
         """
         Set initial color values to show
         """

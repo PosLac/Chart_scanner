@@ -236,7 +236,7 @@ def get_bar_color_for_simple_chart(bar_stats_with_colors: list) -> None:
             image_detections.colors = bar["bgr_color"]
 
 
-def merge_similar_colors(legend_bars_data: list) -> list:
+def merge_similar_colors(legend_bars_data: list) -> np.ndarray:
     """
     Merges similar bar colors
 
