@@ -36,7 +36,7 @@ def detect_colors(img: np.ndarray, bar_stats: list, bars_labels: list) -> list:
 
 def detect_bars_by_color(all_color_bars_img: np.ndarray, bgr_color: list) -> list:
     """
-    Detect bars with the same color ad the given color
+    Detect bars with the same color as the given color
 
     Args:
         all_color_bars_img: color image with bars
@@ -121,8 +121,8 @@ def detect_bar_color(img: np.ndarray, bars_stats: list, bars_labels: list, label
 
     bar_with_color_cropped = bar_with_color[start_y:end_y, start_x:end_x]
 
-    image_rgb = bar_with_color_cropped
-    pixels = image_rgb.reshape(-1, 3)
+    image_bgr = bar_with_color_cropped
+    pixels = image_bgr.reshape(-1, 3)
     unique_colors, counts = np.unique(pixels, axis=0, return_counts=True)
     unique_colors_with_counts = np.array(np.column_stack((unique_colors, counts)), np.uint32)
     unique_colors_with_counts = sorted(unique_colors_with_counts, key=lambda x: x[3], reverse=True)

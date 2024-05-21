@@ -1,36 +1,29 @@
-\documentclass{standalone}%
-\usepackage[T1]{fontenc}%
-\usepackage[utf8]{inputenc}%
-\usepackage{lmodern}%
-\usepackage{textcomp}%
-\usepackage{lastpage}%
-\usepackage{tikz}%
-\usepackage{pgfplots}%
-\pgfplotsset{compat=newest}%
-%
-\usetikzlibrary{positioning}%
-%
-\begin{document}%
-	\normalsize%
-	\begin{tikzpicture}%
-		\definecolor{color}{RGB}{178, 178, 255}%
-		\begin{axis}[
-			xbar, 
-			name=barchart,
-			ymin=0, 
-			ymax=6, 
-			xmin=0, 
-			xmax=3500]%
-			\addplot[fill=color] coordinates {%
-				({3067.28},{5.1})%
-				({1026.39},{4.1})%
-				({2000},{3.1})%
-				({2494.72},{2.09})%
-				({501.32},{1.09})%
-			};%
-			%
-			%
-		\end{axis}%
-		\node[below =of barchart] {Big numbers};
-	\end{tikzpicture}%
+\documentclass{article}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\begin{document}
+	
+	\begin{figure}
+		\centering
+		\begin{tikzpicture}
+			\begin{axis}[
+				ybar,
+				enlarge x limits=0.25,
+				symbolic x coords={A, B, C, D, E},
+				xtick=data,
+				nodes near coords align={vertical},
+				ymin=0, ymax=120,
+				title={Satisfaction Survey Results}
+				]
+				\addplot coordinates {
+					(A, 80) % Service A had 80 satisfied customers
+					(B, 95) % Service B had 95 satisfied customers
+					(C, 70) % Service C had 70 satisfied customers
+					(D, 90) % Service D had 90 satisfied customers
+					(E, 60) % Service E had 60 satisfied customers
+				};
+			\end{axis}
+		\end{tikzpicture}
+	\end{figure}
+	
 \end{document}

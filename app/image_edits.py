@@ -42,7 +42,7 @@ def thresholding(threshold: int) -> np.ndarray:
     Thresholds image with the given value and returns with the image
 
     Returns:
-        binary (numpy.ndarray):
+        binary (np.ndarray):
     """
     global binary, hugh, img_gray
     binary = np.uint8(np.ndarray(img_gray.shape))
@@ -63,34 +63,21 @@ def image_straightening() -> np.ndarray:
     global binary, img_gray, img_color, hugh
 
     hugh = cv2.Canny(img_gray, 50, 200, None, 3)
-    cdst = cv2.cvtColor(hugh, cv2.COLOR_GRAY2BGR)
     lines = cv2.HoughLines(hugh, 1, np.pi / 180, 140, None, 0, 0)
-    sizemax = math.sqrt(cdst.shape[0] ** 2 + cdst.shape[1] ** 2)
     sum_of_degrees = 0
 
     if lines is not None:
         for i in range(0, len(lines)):
-            rho = lines[i][0][0]
             theta = lines[i][0][1]
-            a = math.cos(theta)
-            b = math.sin(theta)
-            x0 = a * rho
-            y0 = b * rho
             act_deg = theta * 180 / math.pi
 
-            pt1 = (int(x0 + sizemax * (-b)), int(y0 + sizemax * a))
-            pt2 = (int(x0 - sizemax * (-b)), int(y0 - sizemax * a))
-
             if 0 <= act_deg < 45:
-                cv2.line(cdst, pt1, pt2, (0, 0, 255), 3, cv2.LINE_AA)
                 sum_of_degrees = sum_of_degrees + act_deg + 90
 
             elif act_deg > 135:
-                cv2.line(cdst, pt1, pt2, (0, 0, 255), 3, cv2.LINE_AA)
                 sum_of_degrees = sum_of_degrees + act_deg - 90
 
             else:
-                cv2.line(cdst, pt1, pt2, (255, 0, 0), 3, cv2.LINE_AA)
                 sum_of_degrees = sum_of_degrees + act_deg
 
     average_rotation = round(sum_of_degrees / len(lines), 3)

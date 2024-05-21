@@ -9,9 +9,6 @@ from config import config
 
 logger = config.logger
 
-pytesseract.pytesseract.tesseract_cmd = 'D:/Apps/Tesseract/tesseract.exe'
-single_digit = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'
-multi_digits = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789'
 config_title = r'--oem 3 --psm 10 -l hun+eng'
 
 orientation = None
